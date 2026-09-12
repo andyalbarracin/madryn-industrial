@@ -13,6 +13,39 @@ Fecha · Qué cambió · Archivos · Funciones · Notas
 
 ---
 
+## MAD-0011 — el mapa base ahora dibuja, y el cajón se pliega
+
+**Fecha:** 2026-09-12
+
+**Qué cambió.** El mapa se veía completamente negro, con la atribución del
+proveedor visible al pie. Esa combinación —atribución sí, territorio no— era la
+pista: el motor arrancaba y el estilo cargaba, pero nadie montaba el lienzo.
+
+**La causa.** La versión 6 del motor de mapas eliminó su exportación por
+defecto. El envoltorio de React que se estaba usando todavía la esperaba, recibía
+`undefined` y fallaba en silencio. Se eliminó el envoltorio y se maneja el motor
+directo con importaciones con nombre: una pieza menos que puede desincronizarse
+con la versión del motor, y control explícito del ciclo de vida.
+
+Además, el cajón inferior de listados ahora se pliega para dejarle todo el alto
+al territorio.
+
+**Archivos:** `apps/web/src/components/map/territory-map.tsx`,
+`apps/web/src/components/map/command-view.tsx`,
+`apps/web/src/app/globals.css`, `apps/web/package.json`.
+
+**Notas.**
+- El lienzo se posiciona con desplazamiento cero sobre un contenedor relativo, no
+  con alto porcentual. Un alto en porcentaje depende de que cada ancestro tenga
+  altura definida, y basta un eslabón suelto para que quede en cero y la pantalla
+  se vea negra sin decir por qué.
+- Los estilos del motor se importan en la hoja principal y no dentro del
+  componente, para que no dependan de cómo se divida el paquete.
+- Los fallos del motor se muestran en pantalla con su mensaje. Un mapa que no
+  carga tiene que explicarse; ese fue justamente el problema que costó una tarde.
+- El mapa se crea una sola vez. Los datos entran actualizando la fuente, no
+  recreando el mapa.
+
 ## MAD-0010 — mapa vectorial real, marquesina en vivo y diagnóstico visible
 
 **Fecha:** 2026-09-12

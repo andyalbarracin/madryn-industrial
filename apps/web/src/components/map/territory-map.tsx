@@ -1,9 +1,16 @@
 'use client';
 
-import 'maplibre-gl/dist/maplibre-gl.css';
-
-import { useMemo, useState } from 'react';
-import Map, { Layer, NavigationControl, ScaleControl, Source, type MapLayerMouseEvent } from 'react-map-gl/maplibre';
+// Importación con nombre y sin export por defecto: la versión 6 del motor lo
+// eliminó. Un envoltorio que todavía esperaba el export por defecto recibía
+// `undefined`, no montaba el lienzo y dejaba la pantalla negra — con la
+// atribución visible, que es lo que despistaba.
+import {
+  GeoJSONSource,
+  Map as MotorMapa,
+  NavigationControl,
+  ScaleControl,
+} from 'maplibre-gl';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { capaDeTipo, type ClaveCapa } from '@/lib/capas';
 import { publicEnv } from '@/lib/env';
@@ -12,19 +19,24 @@ import type { PuntoEntidad } from '@/lib/radar';
 /**
  * Territorio real: mapa vectorial con calles, costas y topónimos.
  *
- * El estilo del mapa base sale de `NEXT_PUBLIC_BASEMAP_STYLE_URL`. Hoy apunta a
- * un servicio de mosaicos vectoriales libre derivado de datos abiertos, sin
- * clave. El destino sigue siendo el mosaico propio: cuando exista, se cambia la
- * variable y este componente no se entera.
+ * Se maneja el motor directo, sin envoltorio de React. Un envoltorio más es una
+ * pieza más que puede desincronizarse con la versión del motor, y acá el ciclo
+ * de vida importa: crear el mapa una vez, actualizar la fuente de datos cuando
+ * cambian los puntos, y destruirlo al desmontar.
  *
- * Los nodos se dibujan con capas nativas del motor —no marcadores de HTML— para
- * que miles de puntos no maten el desplazamiento.
+ * El lienzo se posiciona con `inset-0` sobre un contenedor relativo, no con
+ * alto porcentual: un alto en porcentaje depende de que cada ancestro tenga
+ * altura definida, y basta un eslabón suelto para que el lienzo quede en cero y
+ * la pantalla se vea negra sin decir por qué.
+ *
+ * Los fallos del motor se muestran. Un mapa que no carga tiene que explicarse.
  */
 
 const ESTILO_POR_DEFECTO = 'https://tiles.openfreemap.org/styles/dark';
 
-/** Encuadre inicial: Argentina entera. */
-const VISTA_INICIAL = { longitude: -64.5, latitude: -38.5, zoom: 3.6 } as const;
+/** Encuadre inicial: Argentina continental entera. */
+const CENTRO: [number, number] = [-64.5, -38.5];
+const ZOOM = 3.4;
 
 const COLOR_POR_CAPA: Record<ClaveCapa, string> = {
   senales: '#A7C7F7',
@@ -57,10 +69,22 @@ export function TerritoryMap({
   seleccionada,
   onSeleccionar,
 }: Props) {
-  const [cursor, setCursor] = useState<'grab' | 'pointer'>('grab');
+  const contenedor = useRef<HTMLDivElement | null>(null);
+  const mapa = useRef<InstanceType<typeof MotorMapa> | null>(null);
+  const [listo, setListo] = useState(false);
+  const [fallo, setFallo] = useState<string | null>(null);
+
+  // El manejador de clic vive en una referencia: el mapa se suscribe una sola
+  // vez, pero tiene que llamar siempre a la versión actual. La referencia se
+  // actualiza en un efecto y no durante el render, que es cuando todavía no
+  // está garantizado que el render vaya a confirmarse.
+  const alSeleccionar = useRef(onSeleccionar);
+  useEffect(() => {
+    alSeleccionar.current = onSeleccionar;
+  }, [onSeleccionar]);
+
   const activas = useMemo(() => new Set(capasActivas), [capasActivas]);
 
-  /** Un punto pertenece a la capa de señales si tiene una; si no, a la de su tipo. */
   const coleccion = useMemo(() => {
     const features = puntos
       .map((punto) => {
@@ -68,7 +92,9 @@ export function TerritoryMap({
         const capa: ClaveCapa | null = conSenal ? 'senales' : capaDeTipo(punto.tipo);
         return { punto, capa, conSenal };
       })
-      .filter((f): f is { punto: PuntoEntidad; capa: ClaveCapa; conSenal: boolean } => f.capa !== null)
+      .filter(
+        (f): f is { punto: PuntoEntidad; capa: ClaveCapa; conSenal: boolean } => f.capa !== null,
+      )
       .filter((f) => activas.has(f.capa))
       .map(({ punto, capa, conSenal }) => ({
         type: 'Feature' as const,
@@ -77,7 +103,6 @@ export function TerritoryMap({
         properties: {
           id: punto.id,
           nombre: punto.nombre,
-          tipo: punto.tipo,
           capa,
           color: COLOR_POR_CAPA[capa],
           radio: RADIO_POR_CAPA[capa],
@@ -89,80 +114,144 @@ export function TerritoryMap({
     return { type: 'FeatureCollection' as const, features };
   }, [puntos, activas, entidadesConSenal, seleccionada]);
 
-  const alHacerClick = (evento: MapLayerMouseEvent) => {
-    const rasgo = evento.features?.[0];
-    const id = rasgo?.properties?.['id'];
-    onSeleccionar(typeof id === 'string' && id !== seleccionada ? id : null);
-  };
+  // ── Creación del mapa: una sola vez ──────────────────────────────────────
+  useEffect(() => {
+    if (contenedor.current === null || mapa.current !== null) return;
+
+    // El fallo se publica en el siguiente turno del bucle de eventos. Cambiar el
+    // estado en el cuerpo del efecto encadena renders y React lo señala.
+    const reportarFallo = (mensaje: string) => queueMicrotask(() => setFallo(mensaje));
+
+    let motor: InstanceType<typeof MotorMapa>;
+    try {
+      motor = new MotorMapa({
+        container: contenedor.current,
+        style: publicEnv.basemapStyleUrl || ESTILO_POR_DEFECTO,
+        center: CENTRO,
+        zoom: ZOOM,
+        attributionControl: { compact: true },
+      });
+    } catch (error) {
+      reportarFallo(
+        error instanceof Error ? error.message : 'No se pudo iniciar el motor de mapas.',
+      );
+      return;
+    }
+
+    mapa.current = motor;
+    motor.addControl(new NavigationControl({ showCompass: false }), 'bottom-right');
+    motor.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left');
+
+    motor.on('error', (evento) => {
+      const mensaje = evento.error?.message ?? 'Error del motor de mapas.';
+      // Un mosaico suelto que falla no justifica tapar la pantalla.
+      if (mensaje.includes('Failed to fetch') || mensaje.includes('style')) reportarFallo(mensaje);
+    });
+
+    motor.on('load', () => {
+      motor.addSource('entidades', { type: 'geojson', data: coleccion });
+
+      // Halo: sólo para lo que tiene señal o está seleccionado.
+      motor.addLayer({
+        id: 'halos',
+        type: 'circle',
+        source: 'entidades',
+        filter: ['any', ['==', ['get', 'conSenal'], 1], ['==', ['get', 'elegida'], 1]],
+        paint: {
+          'circle-radius': ['*', ['get', 'radio'], 3],
+          'circle-color': ['get', 'color'],
+          'circle-opacity': 0.16,
+        },
+      });
+
+      motor.addLayer({
+        id: 'nodos',
+        type: 'circle',
+        source: 'entidades',
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            3,
+            ['*', ['get', 'radio'], 0.6],
+            10,
+            ['get', 'radio'],
+          ],
+          'circle-color': ['get', 'color'],
+          'circle-opacity': ['case', ['==', ['get', 'conSenal'], 1], 1, 0.8],
+          'circle-stroke-width': ['case', ['==', ['get', 'elegida'], 1], 1.5, 0],
+          'circle-stroke-color': '#EAEFF4',
+        },
+      });
+
+      // El nombre aparece recién al acercarse: a escala país sería ilegible.
+      motor.addLayer({
+        id: 'etiquetas',
+        type: 'symbol',
+        source: 'entidades',
+        minzoom: 6,
+        layout: {
+          'text-field': ['get', 'nombre'],
+          'text-size': 11,
+          'text-offset': [0, 1.2],
+          'text-anchor': 'top',
+        },
+        paint: {
+          'text-color': '#EAEFF4',
+          'text-halo-color': '#0B0F14',
+          'text-halo-width': 1.2,
+        },
+      });
+
+      motor.on('click', 'nodos', (evento) => {
+        const id = evento.features?.[0]?.properties?.['id'];
+        if (typeof id === 'string') alSeleccionar.current(id);
+      });
+      motor.on('mouseenter', 'nodos', () => {
+        motor.getCanvas().style.cursor = 'pointer';
+      });
+      motor.on('mouseleave', 'nodos', () => {
+        motor.getCanvas().style.cursor = '';
+      });
+
+      setListo(true);
+    });
+
+    return () => {
+      motor.remove();
+      mapa.current = null;
+      setListo(false);
+    };
+    // Se crea una sola vez a propósito: los datos entran por la fuente, abajo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Datos: la fuente se actualiza, el mapa no se recrea ──────────────────
+  useEffect(() => {
+    if (!listo || mapa.current === null) return;
+    const fuente = mapa.current.getSource('entidades') as GeoJSONSource | undefined;
+    fuente?.setData(coleccion);
+  }, [coleccion, listo]);
 
   return (
-    <Map
-      initialViewState={VISTA_INICIAL}
-      mapStyle={publicEnv.basemapStyleUrl || ESTILO_POR_DEFECTO}
-      style={{ width: '100%', height: '100%' }}
-      interactiveLayerIds={['nodos']}
-      onClick={alHacerClick}
-      onMouseEnter={() => setCursor('pointer')}
-      onMouseLeave={() => setCursor('grab')}
-      cursor={cursor}
-      attributionControl={{ compact: true }}
-    >
-      <NavigationControl position="bottom-right" showCompass={false} />
-      <ScaleControl position="bottom-left" unit="metric" />
+    <div className="absolute inset-0">
+      <div ref={contenedor} className="absolute inset-0" />
 
-      <Source id="entidades" type="geojson" data={coleccion}>
-        {/* Halo: sólo para lo que tiene señal o está seleccionado. Es el único
-            brillo de la interfaz. */}
-        <Layer
-          id="halos"
-          type="circle"
-          filter={['any', ['==', ['get', 'conSenal'], 1], ['==', ['get', 'elegida'], 1]]}
-          paint={{
-            'circle-radius': ['*', ['get', 'radio'], 3],
-            'circle-color': ['get', 'color'],
-            'circle-opacity': 0.16,
-          }}
-        />
+      {fallo !== null ? (
+        <div className="mad-panel absolute top-4 left-1/2 z-10 w-[min(30rem,calc(100%-2rem))] -translate-x-1/2 border-mad-alert/40 px-4 py-3">
+          <p className="text-sm font-medium text-mad-alert">El mapa base no cargó</p>
+          <p className="mt-1.5 text-xs leading-relaxed text-mad-fg-dim">{fallo}</p>
+          <p className="mt-2 text-xs text-mad-fg-faint">
+            Los nodos necesitan el mapa base para ubicarse. Revisá la conexión o definí otro estilo
+            en NEXT_PUBLIC_BASEMAP_STYLE_URL.
+          </p>
+        </div>
+      ) : null}
 
-        <Layer
-          id="nodos"
-          type="circle"
-          paint={{
-            'circle-radius': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              3,
-              ['*', ['get', 'radio'], 0.6],
-              10,
-              ['get', 'radio'],
-            ],
-            'circle-color': ['get', 'color'],
-            'circle-opacity': ['case', ['==', ['get', 'conSenal'], 1], 1, 0.8],
-            'circle-stroke-width': ['case', ['==', ['get', 'elegida'], 1], 1.5, 0],
-            'circle-stroke-color': '#EAEFF4',
-          }}
-        />
-
-        {/* El nombre aparece sólo con acercamiento: a escala país sería ilegible. */}
-        <Layer
-          id="etiquetas"
-          type="symbol"
-          minzoom={6}
-          layout={{
-            'text-field': ['get', 'nombre'],
-            'text-size': 11,
-            'text-offset': [0, 1.2],
-            'text-anchor': 'top',
-            'text-allow-overlap': false,
-          }}
-          paint={{
-            'text-color': '#EAEFF4',
-            'text-halo-color': '#0B0F14',
-            'text-halo-width': 1.2,
-          }}
-        />
-      </Source>
-    </Map>
+      {!listo && fallo === null ? (
+        <p className="mad-label absolute top-4 left-4 z-10">Cargando territorio…</p>
+      ) : null}
+    </div>
   );
 }

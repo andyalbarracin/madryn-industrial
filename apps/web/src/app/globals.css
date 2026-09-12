@@ -1,5 +1,10 @@
 @import 'tailwindcss';
 
+/* Estilos del motor de mapas. Van acá y no dentro del componente para que
+   entren siempre en la hoja principal: si el lienzo queda sin posicionar, el
+   mapa se ve negro y no dice por qué. */
+@import 'maplibre-gl/dist/maplibre-gl.css';
+
 /* ══════════════════════════════════════════════════════════════════════════
    SISTEMA VISUAL MADRYN
 

@@ -36,6 +36,7 @@ export function CommandView({
   const [capas, setCapas] = useState<readonly ClaveCapa[]>(CAPAS_POR_DEFECTO);
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
   const [cajon, setCajon] = useState<ClaveCajon>('senales');
+  const [cajonAbierto, setCajonAbierto] = useState(true);
 
   const entidadesConSenal = useMemo(
     () => new Set(senales.map((s) => s.entidadId).filter((id): id is string => id !== null)),
@@ -148,7 +149,11 @@ export function CommandView({
         </div>
 
         {/* ── Cajón inferior ────────────────────────────────────────────── */}
-        <section className="flex h-64 shrink-0 flex-col border-t border-mad-line bg-mad-surface">
+        <section
+          className={`flex shrink-0 flex-col border-t border-mad-line bg-mad-surface transition-[height] duration-200 ${
+            cajonAbierto ? 'h-64' : 'h-10'
+          }`}
+        >
           <nav className="flex shrink-0 border-b border-mad-line" aria-label="Listados">
             {CAJONES.map((item) => {
               const activo = cajon === item.clave;
@@ -170,9 +175,32 @@ export function CommandView({
                 </button>
               );
             })}
+
+            {/* Plegar el cajón: el territorio se queda con todo el alto. */}
+            <button
+              type="button"
+              onClick={() => setCajonAbierto((abierto) => !abierto)}
+              aria-expanded={cajonAbierto}
+              title={cajonAbierto ? 'Plegar el panel' : 'Desplegar el panel'}
+              className="ml-auto flex items-center gap-2 border-l border-mad-line px-4 text-xs text-mad-fg-faint transition-colors hover:text-mad-fg"
+            >
+              {cajonAbierto ? 'Plegar' : 'Desplegar'}
+              <svg
+                viewBox="0 0 16 16"
+                aria-hidden
+                className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                  cajonAbierto ? '' : 'rotate-180'
+                }`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M3 6l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </nav>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className={`min-h-0 flex-1 overflow-y-auto ${cajonAbierto ? '' : 'hidden'}`}>
             {cajon === 'senales' ? (
               <ListaSenales
                 senales={senales}
