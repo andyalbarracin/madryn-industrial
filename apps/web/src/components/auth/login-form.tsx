@@ -1,53 +1,44 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState } from 'react';
 
-import { iniciarSesion, type LoginState } from '@/app/(auth)/login/actions';
-
-const estadoInicial: LoginState = { error: null };
+import { iniciarSesion } from '@/app/(auth)/actions';
+import { ESTADO_AUTH_INICIAL } from '@/lib/auth-state';
+import { BotonEnviar, Campo, CampoPassword, Mensaje } from '@/components/auth/campos';
 
 export function LoginForm({ next }: { next: string }) {
-  const [state, formAction, pending] = useActionState(iniciarSesion, estadoInicial);
+  const [state, formAction, pendiente] = useActionState(iniciarSesion, ESTADO_AUTH_INICIAL);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <input type="hidden" name="next" value={next} />
 
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zaire-fg">Email</span>
-        <input
-          type="email"
-          name="email"
-          autoComplete="email"
-          required
-          className="rounded-md border border-zaire-border bg-zaire-surface px-3 py-2 text-zaire-fg outline-none focus-visible:border-zaire-primary focus-visible:ring-2 focus-visible:ring-zaire-primary/30"
-        />
-      </label>
+      <Campo
+        etiqueta="Email"
+        nombre="email"
+        tipo="email"
+        autoComplete="email"
+        placeholder="nombre@empresa.com"
+      />
 
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zaire-fg">Contraseña</span>
-        <input
-          type="password"
-          name="password"
-          autoComplete="current-password"
-          required
-          className="rounded-md border border-zaire-border bg-zaire-surface px-3 py-2 text-zaire-fg outline-none focus-visible:border-zaire-primary focus-visible:ring-2 focus-visible:ring-zaire-primary/30"
-        />
-      </label>
+      <CampoPassword
+        etiqueta="Contraseña"
+        nombre="password"
+        autoComplete="current-password"
+        accesorio={
+          <Link
+            href="/recuperar"
+            className="text-xs text-mad-fg-faint transition-colors hover:text-mad-highlight"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        }
+      />
 
-      {state.error ? (
-        <p role="alert" className="text-sm text-zaire-danger">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <Mensaje tono="error">{state.error}</Mensaje> : null}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="mt-1 rounded-md bg-zaire-primary px-4 py-2 font-medium text-zaire-primary-fg transition-opacity hover:opacity-90 disabled:opacity-60"
-      >
-        {pending ? 'Entrando…' : 'Entrar'}
-      </button>
+      <BotonEnviar pendiente={pendiente}>Entrar</BotonEnviar>
     </form>
   );
 }
