@@ -13,6 +13,43 @@ Fecha · Qué cambió · Archivos · Funciones · Notas
 
 ---
 
+## MAD-0012 — motor de mapas en su línea estable y arranque a prueba de entornos
+
+**Fecha:** 2026-09-12
+
+**Qué cambió.** El mapa quedaba en "cargando" para siempre. Tres causas
+encadenadas, y la última era propia.
+
+**1. La versión 6 del motor no sirve acá.** Se distribuye sólo como módulos ES y
+con el trabajador en segundo plano en un archivo aparte; en la versión 5 venía
+embebido. El empaquetador no resuelve bien esa referencia, y sin trabajador el
+estilo nunca termina de resolverse: ni carga, ni falla. Se baja a la línea 5, que
+es la que sostiene el ecosistema.
+
+**2. El grafo de módulos quedaba viejo.** Cambiar paquetes con el servidor de
+desarrollo levantado deja el módulo sin resolver hasta reiniciarlo.
+
+**3. El filtro de errores propio tapaba la causa.** Se decidía qué mostrar según
+el texto del mensaje. Ahora el criterio es **si el mapa ya cargó**: antes de
+cargar, cualquier error se muestra; después, un mosaico suelto que falló no
+justifica tapar la pantalla.
+
+**Archivos:** `apps/web/src/components/map/territory-map.tsx`,
+`apps/web/package.json`.
+
+**Notas.**
+- Las capas se montan cuando el estilo está resuelto, escuchando tanto la carga
+  completa como el cambio de estilo. Esperar sólo a la carga completa es frágil:
+  ese evento aguarda al primer cuadro dibujado, y en una máquina sin aceleración
+  por hardware puede demorar muchísimo o no llegar.
+- Hay plazo máximo. Un indicador de carga sin límite no es un estado: es una
+  pantalla rota que no se anima a admitirlo.
+- Si el aviso de demora alcanzó a aparecer y después el mapa carga, el aviso se
+  retira.
+- Verificado en un navegador real: lienzo, controles, atribución, estilo y todos
+  sus recursos derivados responden. La confirmación del último evento de carga
+  necesita aceleración por hardware, que el entorno de prueba no tiene.
+
 ## MAD-0011 — el mapa base ahora dibuja, y el cajón se pliega
 
 **Fecha:** 2026-09-12

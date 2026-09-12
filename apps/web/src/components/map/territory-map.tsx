@@ -142,13 +142,45 @@ export function TerritoryMap({
     motor.addControl(new NavigationControl({ showCompass: false }), 'bottom-right');
     motor.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left');
 
+    // Qué error tapa la pantalla y cuál no.
+    //
+    // El discriminante es **si el mapa ya cargó**, no el texto del mensaje.
+    // Antes de cargar, cualquier error es potencialmente fatal y hay que
+    // mostrarlo: es la diferencia entre entender qué pasa y mirar un rectángulo
+    // negro. Después de cargar, el mapa funciona y un mosaico suelto que falló
+    // no justifica taparlo.
+    let cargado = false;
+
     motor.on('error', (evento) => {
-      const mensaje = evento.error?.message ?? 'Error del motor de mapas.';
-      // Un mosaico suelto que falla no justifica tapar la pantalla.
-      if (mensaje.includes('Failed to fetch') || mensaje.includes('style')) reportarFallo(mensaje);
+      if (cargado) return;
+      reportarFallo(evento.error?.message ?? 'Error del motor de mapas.');
     });
 
-    motor.on('load', () => {
+    // Plazo máximo. Si el estilo no terminó de cargar en este tiempo, algo se
+    // colgó —el trabajador en segundo plano, la red, el proveedor— y hay que
+    // decirlo. Un indicador de carga sin límite no es un estado: es una
+    // pantalla rota que no se anima a admitirlo.
+    const plazo = window.setTimeout(() => {
+      setFallo((anterior) =>
+        anterior ??
+        'El mapa base está tardando más de lo normal. Puede ser la red, el proveedor de mosaicos, ' +
+          'o una máquina sin aceleración por hardware.',
+      );
+    }, 20_000);
+
+    // Cuándo se consideran listas las capas.
+    //
+    // No se usa sólo el evento de carga completa: ése espera al primer cuadro
+    // dibujado, y en una máquina sin aceleración por hardware puede demorar
+    // muchísimo o no llegar. Lo que hace falta para agregar capas es que el
+    // estilo esté resuelto, y eso se sabe antes. Se escuchan las dos señales y
+    // la bandera evita agregar las capas dos veces.
+    let capasAgregadas = false;
+
+    const montarCapas = () => {
+      if (capasAgregadas || !motor.isStyleLoaded()) return;
+      capasAgregadas = true;
+
       motor.addSource('entidades', { type: 'geojson', data: coleccion });
 
       // Halo: sólo para lo que tiene señal o está seleccionado.
@@ -215,10 +247,19 @@ export function TerritoryMap({
         motor.getCanvas().style.cursor = '';
       });
 
+      cargado = true;
+      window.clearTimeout(plazo);
+      // Si el aviso de demora alcanzó a aparecer, se retira: el mapa está acá y
+      // dejar una advertencia vieja en pantalla es peor que no haberla puesto.
+      setFallo(null);
       setListo(true);
-    });
+    };
+
+    motor.on('load', montarCapas);
+    motor.on('styledata', montarCapas);
 
     return () => {
+      window.clearTimeout(plazo);
       motor.remove();
       mapa.current = null;
       setListo(false);
