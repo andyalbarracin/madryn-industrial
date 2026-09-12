@@ -182,9 +182,8 @@ export function CommandView({
               onClick={() => setCajonAbierto((abierto) => !abierto)}
               aria-expanded={cajonAbierto}
               title={cajonAbierto ? 'Plegar el panel' : 'Desplegar el panel'}
-              className="ml-auto flex items-center gap-2 border-l border-mad-line px-4 text-xs text-mad-fg-faint transition-colors hover:text-mad-fg"
+              className="ml-auto flex w-10 items-center justify-center border-l border-mad-line text-mad-fg-faint transition-colors hover:text-mad-fg"
             >
-              {cajonAbierto ? 'Plegar' : 'Desplegar'}
               <svg
                 viewBox="0 0 16 16"
                 aria-hidden

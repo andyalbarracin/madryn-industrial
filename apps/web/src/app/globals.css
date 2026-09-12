@@ -1,9 +1,14 @@
-@import 'tailwindcss';
-
-/* Estilos del motor de mapas. Van acá y no dentro del componente para que
-   entren siempre en la hoja principal: si el lienzo queda sin posicionar, el
-   mapa se ve negro y no dice por qué. */
+/* Estilos del motor de mapas. Van **antes** de las utilidades y no dentro del
+   componente, por dos motivos:
+   1. En la hoja principal entran siempre, sin depender de cómo se divida el
+      paquete.
+   2. Primero significa menor prioridad ante un empate de especificidad. El
+      motor declara `.maplibregl-map { position: relative }`, y si esa regla
+      gana sobre una utilidad de posición, el contenedor del mapa queda con
+      altura cero y la pantalla se ve negra. */
 @import 'maplibre-gl/dist/maplibre-gl.css';
+
+@import 'tailwindcss';
 
 /* ══════════════════════════════════════════════════════════════════════════
    SISTEMA VISUAL MADRYN

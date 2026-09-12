@@ -13,6 +13,53 @@ Fecha · Qué cambió · Archivos · Funciones · Notas
 
 ---
 
+## MAD-0013 — el contenedor del mapa tenía altura cero
+
+**Fecha:** 2026-09-12
+
+**Qué cambió.** La causa de la pantalla negra, encontrada midiendo el árbol de
+elementos en un navegador real en vez de razonando sobre el código:
+
+```
+CANVAS.maplibregl-canvas         1344 x 300
+DIV.maplibregl-canvas-container  1344 x 0     <- altura cero
+DIV.maplibregl-map               1344 x 0     <- altura cero
+DIV (contenedor propio)          1344 x 480   <- el espacio existia
+```
+
+El espacio estaba disponible. Lo que fallaba era que el motor agrega su propia
+clase al mismo elemento, y esa clase declara posición relativa. Como su hoja de
+estilos se importaba **después** de las utilidades, ganaba el empate de
+especificidad: sin posición absoluta, el desplazamiento cero no estira nada y el
+elemento queda sin alto.
+
+Y con alto cero el motor no dibuja ningún cuadro, así que el evento de carga
+nunca llega. De ahí el "cargando" eterno, sin un solo error en la consola.
+
+**Dos arreglos, por cinturón y tiradores:**
+1. La hoja del motor se importa **antes** que las utilidades, así las utilidades
+   ganan el empate.
+2. El contenedor se dimensiona con alto y ancho completos en vez de depender del
+   posicionamiento. Con medidas explícitas no hay nada que disputar.
+
+**Más:** guardia permanente que mide el contenedor al montar y avisa si quedó en
+cero, en vez de esperar en silencio. Y el botón de plegado del cajón quedó sólo
+con su símbolo, sin texto.
+
+**Archivos:** `apps/web/src/app/globals.css`,
+`apps/web/src/components/map/territory-map.tsx`,
+`apps/web/src/components/map/command-view.tsx`.
+
+**Notas.**
+- Medido después del arreglo: el lienzo pasó de 1344x300 a 1344x480 y el
+  contenedor de 0 a 480.
+- El aviso de icono faltante del proveedor de mosaicos es una inconsistencia de
+  su propio estilo —referencia un símbolo que su hoja de sprites no incluye— y no
+  afecta al mapa base.
+- Lección de método: tres intentos de arreglo salieron de razonar sobre el
+  código; el que funcionó salió de medir el elemento en un navegador. Cuando algo
+  no se ve, se mide.
+
 ## MAD-0012 — motor de mapas en su línea estable y arranque a prueba de entornos
 
 **Fecha:** 2026-09-12

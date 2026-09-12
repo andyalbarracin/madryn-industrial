@@ -142,6 +142,24 @@ export function TerritoryMap({
     motor.addControl(new NavigationControl({ showCompass: false }), 'bottom-right');
     motor.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left');
 
+    // Guardia contra el contenedor sin alto.
+    //
+    // Con altura cero el motor no dibuja ningún cuadro, así que el evento de
+    // carga nunca llega: la pantalla queda negra diciendo "cargando" para
+    // siempre, sin un solo error. Ya pasó una vez —una regla de posición del
+    // propio motor le ganaba a la utilidad de la hoja de estilos— y costó caro.
+    // Se mide el contenedor y se avisa en vez de esperar en silencio.
+    const medida = contenedor.current;
+    queueMicrotask(() => {
+      if (medida.offsetHeight === 0 || medida.offsetWidth === 0) {
+        reportarFallo(
+          `El contenedor del mapa mide ${medida.offsetWidth}×${medida.offsetHeight} píxeles. ` +
+            'Con altura cero el motor no dibuja nada. Es un problema de disposición, no de datos ' +
+            'ni de red.',
+        );
+      }
+    });
+
     // Qué error tapa la pantalla y cuál no.
     //
     // El discriminante es **si el mapa ya cargó**, no el texto del mensaje.
@@ -277,7 +295,12 @@ export function TerritoryMap({
 
   return (
     <div className="absolute inset-0">
-      <div ref={contenedor} className="absolute inset-0" />
+      {/* El contenedor del mapa se dimensiona con alto y ancho completos, no con
+          posicionamiento absoluto: el motor le agrega su propia clase con
+          `position: relative` y, ante un empate de especificidad, una de las dos
+          reglas tiene que perder. Con medidas explícitas no hay nada que
+          disputar. */}
+      <div ref={contenedor} className="h-full w-full" />
 
       {fallo !== null ? (
         <div className="mad-panel absolute top-4 left-1/2 z-10 w-[min(30rem,calc(100%-2rem))] -translate-x-1/2 border-mad-alert/40 px-4 py-3">
