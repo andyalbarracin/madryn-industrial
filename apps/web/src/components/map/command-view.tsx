@@ -9,6 +9,7 @@ import { PanelSenal } from '@/components/senales/panel-senal';
 import { ScoreConfianza } from '@/components/senales/score-confianza';
 import { capaDeTipo, CAPAS_POR_DEFECTO, type ClaveCapa } from '@/lib/capas';
 import type {
+  CamaraAmbiente,
   Diagnostico,
   EvidenciaSenal,
   PuntoEntidad,
@@ -36,12 +37,14 @@ export function CommandView({
   senales,
   razones,
   evidencias,
+  camaras,
   diagnosticos,
 }: {
   puntos: readonly PuntoEntidad[];
   senales: readonly SenalResumen[];
   razones: Readonly<Record<string, RazonSenal[]>>;
   evidencias: Readonly<Record<string, EvidenciaSenal[]>>;
+  camaras: readonly CamaraAmbiente[];
   diagnosticos: readonly Diagnostico[];
 }) {
   const [capas, setCapas] = useState<readonly ClaveCapa[]>(CAPAS_POR_DEFECTO);
@@ -62,13 +65,14 @@ export function CommandView({
       yacimientos: 0,
       pozos: 0,
       infraestructura: 0,
+      camaras: camaras.length,
     };
     for (const punto of puntos) {
       const capa = capaDeTipo(punto.tipo);
       if (capa !== null && capa !== 'senales') base[capa] += 1;
     }
     return base;
-  }, [puntos, entidadesConSenal]);
+  }, [puntos, entidadesConSenal, camaras]);
 
   const alternar = (clave: ClaveCapa) => {
     setCapas((actuales) =>
@@ -89,6 +93,7 @@ export function CommandView({
         <div className="relative min-h-0 flex-1 bg-mad-surface-inset">
           <TerritoryMap
             puntos={puntos}
+            camaras={camaras}
             capasActivas={capas}
             entidadesConSenal={entidadesConSenal}
             seleccionada={seleccionada}
@@ -167,6 +172,9 @@ export function CommandView({
           {/* Lectura de estado, abajo a la derecha. */}
           <p className="absolute right-4 bottom-4 text-[11px] tabular-nums text-mad-fg-faint">
             {puntos.length} entidades · {capas.length} capas activas
+            {capas.includes('camaras') && camaras.length > 0
+              ? ' · cámaras: Gobierno de la Ciudad de Buenos Aires (CC BY 2.5 AR)'
+              : ''}
           </p>
         </div>
 

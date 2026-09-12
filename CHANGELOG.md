@@ -13,6 +13,53 @@ Fecha · Qué cambió · Archivos · Funciones · Notas
 
 ---
 
+## MAD-0015 — superficie de entidades y capa de cámaras públicas
+
+**Fecha:** 2026-09-12
+
+**Qué cambió.** Dos superficies nuevas, las dos con datos reales.
+
+**1. Entidades.** Listado con búsqueda y filtros por tipo y provincia, y perfil
+por entidad con su línea de tiempo, sus relaciones con vigencia y su distancia a
+cada base operativa del cliente. Esa distancia se calcula con **la misma función
+pura que alimenta el encaje geográfico del puntaje**: si diera distinto en los
+dos lugares, uno estaría mintiendo.
+
+**2. Cámaras públicas como capa de ambiente.** 224 cámaras de control vehicular
+geolocalizadas, del portal de datos abiertos del Gobierno de la Ciudad de Buenos
+Aires, con licencia Creative Commons Atribución 2.5 Argentina. La fuente queda
+registrada con su licencia y su método de acceso antes de mostrar un solo punto,
+y la atribución se muestra en la capa.
+
+**Archivos**
+
+| Archivo | Rol |
+|---|---|
+| `apps/web/src/lib/entidades.ts` | Listado y detalle con eventos, relaciones y distancia a bases |
+| `apps/web/src/components/entidades/tabla-entidades.tsx` | Tabla con filtros |
+| `apps/web/src/app/(app)/entidades/page.tsx` | Listado |
+| `apps/web/src/app/(app)/entidades/[id]/page.tsx` | Perfil con historia |
+| `apps/web/src/lib/capas.ts`, `radar.ts` | Capa de ambiente |
+| `apps/web/src/components/map/territory-map.tsx` | Fuente y capa propias para cámaras |
+
+**Funciones y símbolos:** `getEntidades()`, `getDetalleEntidad()`, `EntidadFila`,
+`EventoEntidad`, `RelacionEntidad`, `BaseCercana`, `DetalleEntidad`,
+`TablaEntidades()`, `CamaraAmbiente`.
+
+**Notas.**
+- Las cámaras van en tabla propia y no en la ontología de entidades: una cámara
+  de tránsito es contexto ambiental, no una oportunidad. Mezclarlas ensuciaría el
+  listado con 224 filas que no son oportunidades de nada.
+- Son **ubicaciones**, no transmisiones de video. El organismo publica dónde
+  están, no lo que ven. Cualquier capa de video en vivo es otra fuente, con otra
+  licencia, y se registra aparte. La diferencia importa: mostrar dónde hay una
+  cámara pública es dato de infraestructura; retransmitir su imagen es otra cosa.
+- Los filtros de la tabla corren en el navegador porque el conjunto entero ya
+  está ahí. Cuando el volumen lo justifique, la consulta se mueve al servidor y
+  el componente no cambia.
+- Si la capa de cámaras no está cargada, no se muestra ningún error: es opcional,
+  y no se le pone cartel de falla a algo que nadie pidió todavía.
+
 ## MAD-0014 — puntaje explicable y panel de evidencia
 
 **Fecha:** 2026-09-12

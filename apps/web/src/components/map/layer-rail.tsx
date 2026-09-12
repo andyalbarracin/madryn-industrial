@@ -44,6 +44,14 @@ const ICONOS: Record<ClaveCapa, React.ReactNode> = {
       <path d="M9 19h6" />
     </>
   ),
+  // Cámara: cuerpo con lente.
+  camaras: (
+    <>
+      <path d="M4 8.5h11a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1Z" />
+      <path d="M16 11.5 21 9v6l-5-2.5" />
+      <circle cx="8" cy="12" r="1.6" />
+    </>
+  ),
   // Infraestructura: planta con chimeneas.
   infraestructura: (
     <>

@@ -17,7 +17,7 @@ export interface MadNavItem {
 
 export const MAD_NAV: readonly MadNavItem[] = [
   { href: '/radar', label: 'Radar', feature: 'radar', estado: 'hecho' },
-  { href: '/entidades', label: 'Entidades', feature: 'entidades', estado: 'roadmap' },
+  { href: '/entidades', label: 'Entidades', feature: 'entidades', estado: 'hecho' },
   { href: '/curacion', label: 'Curación', feature: 'curacion', estado: 'roadmap' },
   { href: '/watchlists', label: 'Watchlists', feature: 'watchlists', estado: 'roadmap' },
   { href: '/fuentes', label: 'Fuentes', feature: 'fuentes', estado: 'roadmap' },

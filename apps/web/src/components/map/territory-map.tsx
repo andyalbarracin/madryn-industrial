@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { capaDeTipo, type ClaveCapa } from '@/lib/capas';
 import { publicEnv } from '@/lib/env';
-import type { PuntoEntidad } from '@/lib/radar';
+import type { CamaraAmbiente, PuntoEntidad } from '@/lib/radar';
 
 /**
  * Territorio real: mapa vectorial con calles, costas y topónimos.
@@ -53,6 +53,9 @@ const COLOR_POR_CAPA: Record<ClaveCapa, string> = {
   yacimientos: '#4F7CD9',
   pozos: '#566377',
   infraestructura: '#566377',
+  // Las cámaras se dibujan en su propia capa; entra para que el mapa de
+  // colores quede completo y el compilador avise si se agrega otra capa.
+  camaras: '#566377',
 };
 
 const RADIO_POR_CAPA: Record<ClaveCapa, number> = {
@@ -61,10 +64,12 @@ const RADIO_POR_CAPA: Record<ClaveCapa, number> = {
   yacimientos: 4.5,
   pozos: 3,
   infraestructura: 3.5,
+  camaras: 2,
 };
 
 interface Props {
   puntos: readonly PuntoEntidad[];
+  camaras: readonly CamaraAmbiente[];
   capasActivas: readonly ClaveCapa[];
   entidadesConSenal: ReadonlySet<string>;
   seleccionada: string | null;
@@ -73,6 +78,7 @@ interface Props {
 
 export function TerritoryMap({
   puntos,
+  camaras,
   capasActivas,
   entidadesConSenal,
   seleccionada,
@@ -122,6 +128,22 @@ export function TerritoryMap({
 
     return { type: 'FeatureCollection' as const, features };
   }, [puntos, activas, entidadesConSenal, seleccionada]);
+
+  /** Las cámaras son capa de ambiente: viven en su propia fuente. */
+  const coleccionCamaras = useMemo(
+    () => ({
+      type: 'FeatureCollection' as const,
+      features: activas.has('camaras')
+        ? camaras.map((camara) => ({
+            type: 'Feature' as const,
+            id: camara.id,
+            geometry: { type: 'Point' as const, coordinates: [camara.lon, camara.lat] },
+            properties: { ubicacion: camara.ubicacion, tipo: camara.tipo ?? '' },
+          }))
+        : [],
+    }),
+    [camaras, activas],
+  );
 
   // ── Creación del mapa: una sola vez ──────────────────────────────────────
   useEffect(() => {
@@ -278,6 +300,22 @@ export function TerritoryMap({
         },
       });
 
+      // Capa de ambiente: cuadraditos, no círculos. La forma distingue el
+      // contexto del dominio aunque el color sea parecido.
+      motor.addSource('camaras', { type: 'geojson', data: coleccionCamaras });
+      motor.addLayer({
+        id: 'camaras',
+        type: 'circle',
+        source: 'camaras',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 1.5, 14, 4],
+          'circle-color': '#566377',
+          'circle-opacity': 0.85,
+          'circle-stroke-width': 0.5,
+          'circle-stroke-color': '#A7C7F7',
+        },
+      });
+
       motor.on('click', 'nodos', (evento) => {
         const id = evento.features?.[0]?.properties?.['id'];
         if (typeof id === 'string') alSeleccionar.current(id);
@@ -316,6 +354,12 @@ export function TerritoryMap({
     const fuente = mapa.current.getSource('entidades') as GeoJSONSource | undefined;
     fuente?.setData(coleccion);
   }, [coleccion, listo]);
+
+  useEffect(() => {
+    if (!listo || mapa.current === null) return;
+    const fuente = mapa.current.getSource('camaras') as GeoJSONSource | undefined;
+    fuente?.setData(coleccionCamaras);
+  }, [coleccionCamaras, listo]);
 
   return (
     <div className="absolute inset-0">

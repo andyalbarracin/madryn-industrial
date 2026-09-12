@@ -57,6 +57,15 @@ export interface EvidenciaSenal {
   registroRef: string | null;
 }
 
+/** Cámara pública de contexto. No es una entidad del dominio de oportunidades. */
+export interface CamaraAmbiente {
+  id: string;
+  ubicacion: string;
+  tipo: string | null;
+  lon: number;
+  lat: number;
+}
+
 export interface Diagnostico {
   nivel: 'error' | 'aviso';
   titulo: string;
@@ -72,6 +81,8 @@ export interface EstadoRadar {
   razones: Record<string, RazonSenal[]>;
   /** Evidencia por señal. Clave: id de la señal. */
   evidencias: Record<string, EvidenciaSenal[]>;
+  /** Capa de ambiente: cámaras públicas geolocalizadas. */
+  camaras: CamaraAmbiente[];
   diagnosticos: Diagnostico[];
 }
 
@@ -84,7 +95,7 @@ export const getEstadoRadar = cache(async (): Promise<EstadoRadar> => {
   const supabase = await createSupabaseServerClient();
   const diagnosticos: Diagnostico[] = [];
 
-  const [workspace, geo, signals, reasons, evidence] = await Promise.all([
+  const [workspace, geo, signals, reasons, evidence, cams] = await Promise.all([
     getActiveWorkspace(),
     supabase
       .from('mad_entities_geo')
@@ -107,6 +118,7 @@ export const getEstadoRadar = cache(async (): Promise<EstadoRadar> => {
         'signal_id, orden, mad_evidence_links!inner(id, claim_kind, fragmento, limitaciones, registro_ref)',
       )
       .order('orden', { ascending: true }),
+    supabase.from('mad_ambient_cameras_geo').select('id, ubicacion, tipo, lon, lat').limit(5000),
   ]);
 
   // ── Membresía ───────────────────────────────────────────────────────────
@@ -219,5 +231,16 @@ export const getEstadoRadar = cache(async (): Promise<EstadoRadar> => {
     });
   }
 
-  return { puntos, senales, razones, evidencias, diagnosticos };
+  // La capa de ambiente no genera diagnóstico si falta: es opcional. Que no
+  // estén las cámaras no impide usar el radar, así que no se le pone un cartel
+  // de error a algo que nadie pidió todavía.
+  const camaras: CamaraAmbiente[] = (cams.data ?? []).map((fila) => ({
+    id: fila.id,
+    ubicacion: fila.ubicacion,
+    tipo: fila.tipo,
+    lon: Number(fila.lon),
+    lat: Number(fila.lat),
+  }));
+
+  return { puntos, senales, razones, evidencias, camaras, diagnosticos };
 });

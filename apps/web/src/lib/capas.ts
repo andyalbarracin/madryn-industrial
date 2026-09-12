@@ -6,7 +6,13 @@
  * color solo nunca alcanza para comunicar de qué se trata un punto.
  */
 
-export type ClaveCapa = 'pozos' | 'yacimientos' | 'proyectos' | 'infraestructura' | 'senales';
+export type ClaveCapa =
+  | 'pozos'
+  | 'yacimientos'
+  | 'proyectos'
+  | 'infraestructura'
+  | 'senales'
+  | 'camaras';
 
 export interface Capa {
   clave: ClaveCapa;
@@ -59,6 +65,15 @@ export const CAPAS: readonly Capa[] = [
     color: 'var(--mad-steel)',
     radio: 2,
     porDefecto: true,
+  },
+  {
+    clave: 'camaras',
+    etiqueta: 'Cámaras',
+    descripcion: 'Cámaras públicas de control vehicular',
+    tipos: [],
+    color: 'var(--mad-steel)',
+    radio: 2,
+    porDefecto: false,
   },
   {
     clave: 'infraestructura',

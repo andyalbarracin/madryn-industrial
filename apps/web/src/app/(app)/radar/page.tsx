@@ -19,7 +19,7 @@ export default async function RadarPage() {
   // Cada página vuelve a pedir sesión: el layout es la primera línea, no la única.
   await requireUser();
 
-  const { puntos, senales, razones, evidencias, diagnosticos } = await getEstadoRadar();
+  const { puntos, senales, razones, evidencias, camaras, diagnosticos } = await getEstadoRadar();
 
   return (
     <CommandView
@@ -27,6 +27,7 @@ export default async function RadarPage() {
       senales={senales}
       razones={razones}
       evidencias={evidencias}
+      camaras={camaras}
       diagnosticos={diagnosticos}
     />
   );
