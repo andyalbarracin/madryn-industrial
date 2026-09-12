@@ -5,9 +5,16 @@ import { useMemo, useState } from 'react';
 import { LayerRail } from '@/components/map/layer-rail';
 import { PanelDiagnostico } from '@/components/map/panel-diagnostico';
 import { TerritoryMap } from '@/components/map/territory-map';
+import { PanelSenal } from '@/components/senales/panel-senal';
 import { ScoreConfianza } from '@/components/senales/score-confianza';
 import { capaDeTipo, CAPAS_POR_DEFECTO, type ClaveCapa } from '@/lib/capas';
-import type { Diagnostico, PuntoEntidad, SenalResumen } from '@/lib/radar';
+import type {
+  Diagnostico,
+  EvidenciaSenal,
+  PuntoEntidad,
+  RazonSenal,
+  SenalResumen,
+} from '@/lib/radar';
 
 /**
  * Pantalla de mando: riel de capas, territorio y cajón de señales.
@@ -27,16 +34,21 @@ type ClaveCajon = (typeof CAJONES)[number]['clave'];
 export function CommandView({
   puntos,
   senales,
+  razones,
+  evidencias,
   diagnosticos,
 }: {
   puntos: readonly PuntoEntidad[];
   senales: readonly SenalResumen[];
+  razones: Readonly<Record<string, RazonSenal[]>>;
+  evidencias: Readonly<Record<string, EvidenciaSenal[]>>;
   diagnosticos: readonly Diagnostico[];
 }) {
   const [capas, setCapas] = useState<readonly ClaveCapa[]>(CAPAS_POR_DEFECTO);
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
   const [cajon, setCajon] = useState<ClaveCajon>('senales');
   const [cajonAbierto, setCajonAbierto] = useState(true);
+  const [senalAbierta, setSenalAbierta] = useState<string | null>(null);
 
   const entidadesConSenal = useMemo(
     () => new Set(senales.map((s) => s.entidadId).filter((id): id is string => id !== null)),
@@ -64,6 +76,7 @@ export function CommandView({
     );
   };
 
+  const senalSeleccionada = senales.find((s) => s.id === senalAbierta) ?? null;
   const entidad = puntos.find((p) => p.id === seleccionada) ?? null;
   const senalesDeEntidad = entidad ? senales.filter((s) => s.entidadId === entidad.id) : [];
 
@@ -83,6 +96,15 @@ export function CommandView({
           />
 
           <PanelDiagnostico diagnosticos={diagnosticos} />
+
+          {senalSeleccionada ? (
+            <PanelSenal
+              senal={senalSeleccionada}
+              razones={razones[senalSeleccionada.id] ?? []}
+              evidencias={evidencias[senalSeleccionada.id] ?? []}
+              onCerrar={() => setSenalAbierta(null)}
+            />
+          ) : null}
 
           {/* Panel de detalle: flota sobre el territorio, no lo desplaza. */}
           {entidad ? (
@@ -204,7 +226,9 @@ export function CommandView({
               <ListaSenales
                 senales={senales}
                 onSeleccionar={setSeleccionada}
+                onAbrir={setSenalAbierta}
                 seleccionada={seleccionada}
+                abierta={senalAbierta}
               />
             ) : (
               <ListaEntidades
@@ -223,11 +247,15 @@ export function CommandView({
 function ListaSenales({
   senales,
   seleccionada,
+  abierta,
   onSeleccionar,
+  onAbrir,
 }: {
   senales: readonly SenalResumen[];
   seleccionada: string | null;
+  abierta: string | null;
   onSeleccionar: (id: string | null) => void;
+  onAbrir: (id: string | null) => void;
 }) {
   if (senales.length === 0) {
     return (
@@ -241,12 +269,15 @@ function ListaSenales({
   return (
     <ul className="divide-y divide-mad-line">
       {senales.map((senal) => {
-        const activa = senal.entidadId !== null && senal.entidadId === seleccionada;
+        const activa = senal.id === abierta || (senal.entidadId !== null && senal.entidadId === seleccionada);
         return (
           <li key={senal.id}>
             <button
               type="button"
-              onClick={() => onSeleccionar(senal.entidadId)}
+              onClick={() => {
+                onSeleccionar(senal.entidadId);
+                onAbrir(senal.id);
+              }}
               className={`flex w-full items-center justify-between gap-6 px-4 py-3 text-left transition-colors ${
                 activa ? 'bg-mad-accent/8' : 'hover:bg-mad-surface-raised'
               }`}

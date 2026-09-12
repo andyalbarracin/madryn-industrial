@@ -13,6 +13,64 @@ Fecha · Qué cambió · Archivos · Funciones · Notas
 
 ---
 
+## MAD-0014 — puntaje explicable y panel de evidencia
+
+**Fecha:** 2026-09-12
+
+**Qué cambió.** El corazón del producto: el cálculo que decide, puro y testeado,
+y la pantalla que lo abre hasta la fuente.
+
+**1. Cálculo puro en el paquete de lógica.** Distancia sobre la superficie
+terrestre, encaje geográfico, encaje de servicios, frescura del hecho, puntaje de
+oportunidad y confianza. Sin entrada/salida, sin reloj, sin azar: el tiempo entra
+como un número de días que calcula quien llama. **45 pruebas**, escritas antes
+que la implementación.
+
+**2. Panel de señal.** Al abrir una señal se ve por qué tiene el puntaje que
+tiene —cada factor con su aporte, las penalizaciones incluidas— y qué la
+sostiene: cada afirmación con su naturaleza declarada y sus limitaciones escritas.
+
+**3. Ruido del mapa, silenciado.** Se declara la familia tipográfica de las
+etiquetas; sin eso el motor pedía una fuente que el proveedor de mosaicos no
+hospeda y cada letra producía un error. Los íconos que el estilo del proveedor
+pide y su propia hoja de sprites no incluye se resuelven con un píxel
+transparente.
+
+**Archivos**
+
+| Archivo | Rol |
+|---|---|
+| `packages/core/src/geo.ts` | Distancia sobre la esfera y encaje geográfico |
+| `packages/core/src/scoring.ts` | Puntaje, confianza y desglose |
+| `packages/core/src/geo.test.ts`, `scoring.test.ts` | 37 pruebas nuevas |
+| `apps/web/src/components/senales/panel-senal.tsx` | Por qué el puntaje + evidencia |
+| `apps/web/src/lib/radar.ts` | Desglose y evidencia agrupados por señal |
+| `apps/web/src/components/map/territory-map.tsx` | Familia tipográfica e íconos faltantes |
+
+**Funciones y símbolos:** `distanciaKm()`, `encajeGeografico()`, `Coordenada`,
+`encajeDeServicios()`, `frescura()`, `calcularPuntaje()`, `calcularConfianza()`,
+`EntradaPuntaje`, `ComponentePuntaje`, `ResultadoPuntaje`, `PanelSenal()`,
+`RazonSenal`, `EvidenciaSenal`.
+
+**Notas.**
+- La distancia se implementa desde la descripción matemática de la fórmula del
+  semiverseno. El error frente a un elipsoide es del orden del 0,3 %, irrelevante
+  para decidir si algo cae dentro de un radio comercial.
+- El encaje geográfico decae de forma continua y no se corta en el borde del
+  radio. Un corte duro haría que dos proyectos separados por un kilómetro
+  recibieran puntajes opuestos, que es justo lo que no se le puede explicar a un
+  comercial.
+- Sin requerimientos de servicio declarados el encaje es cero, no uno. Que no
+  sepamos qué hace falta no significa que encajemos: suponer lo contrario infla
+  el puntaje justo en los casos peor documentados.
+- Los datos faltantes descuentan **confianza**, no puntaje. No cambian si la
+  oportunidad es buena; cambian cuánto podemos afirmarlo.
+- Hay una prueba que fija la regla del producto: dos señales con el mismo puntaje
+  y distinta evidencia deben tener la misma cifra de puntaje y distinta confianza.
+- Los aportes del desglose suman exactamente el puntaje mostrado, con un
+  componente de ajuste si el recorte a la escala movió el total. Un desglose que
+  no cierra es peor que no tener desglose.
+
 ## MAD-0013 — el contenedor del mapa tenía altura cero
 
 **Fecha:** 2026-09-12

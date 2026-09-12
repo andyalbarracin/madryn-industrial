@@ -6,6 +6,17 @@
  */
 
 export { MAD_FEATURES, isFeatureEnabled, parseEnabledFeatures } from './features';
+
+export { distanciaKm, encajeGeografico } from './geo';
+export type { Coordenada } from './geo';
+
+export { calcularConfianza, calcularPuntaje, encajeDeServicios, frescura } from './scoring';
+export type {
+  ComponentePuntaje,
+  EntradaPuntaje,
+  EvidenciaResumen,
+  ResultadoPuntaje,
+} from './scoring';
 export type { MadFeature } from './features';
 
 export {

@@ -34,6 +34,15 @@ import type { PuntoEntidad } from '@/lib/radar';
 
 const ESTILO_POR_DEFECTO = 'https://tiles.openfreemap.org/styles/dark';
 
+/**
+ * Familia tipográfica de las etiquetas del mapa.
+ *
+ * Tiene que existir en el servidor de glifos del proveedor de mosaicos. No es la
+ * tipografía de la interfaz: el texto del mapa lo rasteriza el motor a partir de
+ * glifos que descarga, no el navegador.
+ */
+const FUENTE_ETIQUETAS = ['Noto Sans Regular'];
+
 /** Encuadre inicial: Argentina continental entera. */
 const CENTRO: [number, number] = [-64.5, -38.5];
 const ZOOM = 3.4;
@@ -174,6 +183,17 @@ export function TerritoryMap({
       reportarFallo(evento.error?.message ?? 'Error del motor de mapas.');
     });
 
+    // Íconos que el estilo del proveedor pide y su propia hoja de sprites no
+    // incluye. Es una inconsistencia de ellos, no nuestra, y no afecta al mapa:
+    // se registra un píxel transparente para que el motor deje de reclamarlo en
+    // cada cuadro. Sin esto la consola se llena de ruido que tapa los avisos que
+    // sí importan.
+    motor.on('styleimagemissing', (evento) => {
+      const nombre = evento.id;
+      if (motor.hasImage(nombre)) return;
+      motor.addImage(nombre, { width: 1, height: 1, data: new Uint8Array(4) });
+    });
+
     // Plazo máximo. Si el estilo no terminó de cargar en este tiempo, algo se
     // colgó —el trabajador en segundo plano, la red, el proveedor— y hay que
     // decirlo. Un indicador de carga sin límite no es un estado: es una
@@ -243,6 +263,10 @@ export function TerritoryMap({
         minzoom: 6,
         layout: {
           'text-field': ['get', 'nombre'],
+          // Declarar la familia es obligatorio: sin esto el motor pide la fuente
+          // que trae por defecto, que este proveedor de mosaicos no hospeda, y
+          // cada letra de cada etiqueta produce un 404.
+          'text-font': FUENTE_ETIQUETAS,
           'text-size': 11,
           'text-offset': [0, 1.2],
           'text-anchor': 'top',

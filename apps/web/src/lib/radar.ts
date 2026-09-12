@@ -41,6 +41,22 @@ export interface SenalResumen {
   publicada: boolean;
 }
 
+/** Un factor del desglose del puntaje. `aporte` negativo = penalización. */
+export interface RazonSenal {
+  factor: string;
+  etiqueta: string;
+  aporte: number;
+}
+
+/** Una afirmación que sostiene la señal, con su naturaleza declarada. */
+export interface EvidenciaSenal {
+  id: string;
+  claimKind: string;
+  fragmento: string | null;
+  limitaciones: string | null;
+  registroRef: string | null;
+}
+
 export interface Diagnostico {
   nivel: 'error' | 'aviso';
   titulo: string;
@@ -52,6 +68,10 @@ export interface Diagnostico {
 export interface EstadoRadar {
   puntos: PuntoEntidad[];
   senales: SenalResumen[];
+  /** Desglose del puntaje por señal. Clave: id de la señal. */
+  razones: Record<string, RazonSenal[]>;
+  /** Evidencia por señal. Clave: id de la señal. */
+  evidencias: Record<string, EvidenciaSenal[]>;
   diagnosticos: Diagnostico[];
 }
 
@@ -64,7 +84,7 @@ export const getEstadoRadar = cache(async (): Promise<EstadoRadar> => {
   const supabase = await createSupabaseServerClient();
   const diagnosticos: Diagnostico[] = [];
 
-  const [workspace, geo, signals] = await Promise.all([
+  const [workspace, geo, signals, reasons, evidence] = await Promise.all([
     getActiveWorkspace(),
     supabase
       .from('mad_entities_geo')
@@ -77,6 +97,16 @@ export const getEstadoRadar = cache(async (): Promise<EstadoRadar> => {
       )
       .order('occurred_at', { ascending: false, nullsFirst: false })
       .limit(100),
+    supabase
+      .from('mad_signal_reasons')
+      .select('signal_id, factor, etiqueta, aporte, orden')
+      .order('orden', { ascending: true }),
+    supabase
+      .from('mad_signal_evidence')
+      .select(
+        'signal_id, orden, mad_evidence_links!inner(id, claim_kind, fragmento, limitaciones, registro_ref)',
+      )
+      .order('orden', { ascending: true }),
   ]);
 
   // ── Membresía ───────────────────────────────────────────────────────────
@@ -159,5 +189,35 @@ export const getEstadoRadar = cache(async (): Promise<EstadoRadar> => {
     }));
   }
 
-  return { puntos, senales, diagnosticos };
+  // ── Desglose y evidencia ────────────────────────────────────────────────
+  // Se traen de una sola vez y se agrupan por señal, en vez de una consulta por
+  // señal al abrir el panel: son pocas filas y evita una cascada de pedidos.
+  const razones: Record<string, RazonSenal[]> = {};
+  for (const fila of reasons.data ?? []) {
+    const lista = (razones[fila.signal_id] ??= []);
+    lista.push({
+      factor: fila.factor,
+      etiqueta: fila.etiqueta,
+      aporte: Number(fila.aporte),
+    });
+  }
+
+  const evidencias: Record<string, EvidenciaSenal[]> = {};
+  for (const fila of evidence.data ?? []) {
+    const enlace = Array.isArray(fila.mad_evidence_links)
+      ? fila.mad_evidence_links[0]
+      : fila.mad_evidence_links;
+    if (!enlace) continue;
+
+    const lista = (evidencias[fila.signal_id] ??= []);
+    lista.push({
+      id: enlace.id,
+      claimKind: enlace.claim_kind,
+      fragmento: enlace.fragmento,
+      limitaciones: enlace.limitaciones,
+      registroRef: enlace.registro_ref,
+    });
+  }
+
+  return { puntos, senales, razones, evidencias, diagnosticos };
 });
