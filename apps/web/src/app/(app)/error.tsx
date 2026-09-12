@@ -1,30 +1,43 @@
 'use client';
 
 /**
- * Error boundary de la app. Muestra el mensaje real (es una herramienta interna:
- * esconderlo sólo hace más lento el diagnóstico) y ofrece reintentar.
+ * Límite de error. Muestra el mensaje real: es una herramienta interna, y
+ * esconder la causa sólo alarga el diagnóstico.
  */
-export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   return (
-    <section className="mx-auto max-w-3xl">
-      <h1 className="text-xl font-semibold text-zaire-fg">Algo se rompió</h1>
-      <p className="mt-2 text-sm text-zaire-fg-muted">
-        No pudimos cargar esta sección. Si acabás de crear el proyecto Supabase, puede que falte
-        correr el SQL de <code>../.docs/sql/</code>.
-      </p>
+    <div className="flex h-full items-center justify-center p-6">
+      <section className="mad-panel w-full max-w-2xl">
+        <header className="border-b border-mad-line px-5 py-4">
+          <p className="mad-label text-mad-alert">Fallo</p>
+          <h1 className="mt-1.5 text-lg font-medium text-mad-fg">No pudimos cargar esta sección</h1>
+        </header>
 
-      <pre className="mt-4 overflow-x-auto rounded-lg border border-zaire-border bg-zaire-surface p-4 font-mono text-xs text-zaire-danger">
-        {error.message}
-        {error.digest ? `\n\ndigest: ${error.digest}` : ''}
-      </pre>
+        <div className="px-5 py-4">
+          <p className="text-sm text-mad-fg-dim">
+            Si el proyecto de base de datos es nuevo, es probable que falte aplicar el esquema.
+          </p>
 
-      <button
-        type="button"
-        onClick={reset}
-        className="mt-4 rounded-md bg-zaire-primary px-4 py-2 text-sm font-medium text-zaire-primary-fg transition-opacity hover:opacity-90"
-      >
-        Reintentar
-      </button>
-    </section>
+          <pre className="mt-4 overflow-x-auto rounded-mad border border-mad-line bg-mad-surface-inset p-4 text-xs leading-relaxed text-mad-alert">
+            {error.message}
+            {error.digest ? `\n\ndigest: ${error.digest}` : ''}
+          </pre>
+
+          <button
+            type="button"
+            onClick={reset}
+            className="mt-4 rounded-mad bg-mad-accent px-4 py-2 text-sm font-medium text-[#06101F] transition-colors hover:bg-mad-highlight"
+          >
+            Reintentar
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }

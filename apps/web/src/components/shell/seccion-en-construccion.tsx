@@ -1,52 +1,48 @@
-import type { ReactNode } from 'react';
-
 /**
  * Encabezado de sección + qué falta para que exista de verdad.
  *
- * Existe para cumplir la honestidad de estado: una sección vacía tiene que
- * **decir** que está vacía y por qué, no simular que hay datos. Cuando la
- * sección se construye, este componente se saca de ahí.
+ * Cumple la honestidad de estado: una sección vacía tiene que **decir** que está
+ * vacía y por qué, no simular que hay datos. Cuando la sección se construye,
+ * este componente se saca de ahí.
  */
 export function SeccionEnConstruccion({
   titulo,
   proposito,
   falta,
-  children,
 }: {
   titulo: string;
   proposito: string;
   falta: readonly string[];
-  children?: ReactNode;
 }) {
   return (
-    <section className="mx-auto max-w-3xl">
-      <header>
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-zaire-fg">{titulo}</h1>
-          <span className="rounded-sm border border-zaire-border px-1.5 py-0.5 text-[10px] tracking-wide text-zaire-fg-muted uppercase">
-            en construcción
-          </span>
+    <div className="h-full overflow-y-auto">
+      <section className="mx-auto max-w-3xl px-6 py-10">
+        <header>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-medium text-mad-fg">{titulo}</h1>
+            <span className="rounded-xs border border-mad-line px-1.5 py-0.5 text-[9px] tracking-[0.14em] text-mad-fg-faint uppercase">
+              en construcción
+            </span>
+          </div>
+          <p className="mt-2.5 text-sm leading-relaxed text-mad-fg-dim">{proposito}</p>
+        </header>
+
+        <div className="mad-panel mt-7">
+          <h2 className="mad-label border-b border-mad-line px-5 py-3">
+            Qué falta para que esta pantalla muestre algo real
+          </h2>
+          <ol className="divide-y divide-mad-line">
+            {falta.map((item, i) => (
+              <li key={item} className="flex gap-4 px-5 py-3.5 text-sm text-mad-fg">
+                <span aria-hidden className="shrink-0 tabular-nums text-mad-fg-faint">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span className="leading-relaxed">{item}</span>
+              </li>
+            ))}
+          </ol>
         </div>
-        <p className="mt-2 text-sm text-zaire-fg-muted">{proposito}</p>
-      </header>
-
-      <div className="mt-6 rounded-lg border border-zaire-border bg-zaire-surface p-5">
-        <h2 className="text-xs font-semibold tracking-[0.12em] text-zaire-fg-muted uppercase">
-          Qué falta para que esta pantalla muestre algo real
-        </h2>
-        <ul className="mt-3 flex flex-col gap-2">
-          {falta.map((item) => (
-            <li key={item} className="flex gap-2 text-sm text-zaire-fg">
-              <span aria-hidden className="text-zaire-fg-muted">
-                ·
-              </span>
-              {item}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {children}
-    </section>
+      </section>
+    </div>
   );
 }

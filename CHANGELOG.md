@@ -13,6 +13,138 @@ Fecha · Qué cambió · Archivos · Funciones · Notas
 
 ---
 
+## MAD-0009 — pantalla de mando: riel de capas y territorio
+
+**Fecha:** 2026-09-12
+
+**Qué cambió.** La primera pantalla deja de ser una lista y pasa a ser un puesto
+de mando: riel de capas a la izquierda, territorio en el centro, cajón de
+listados abajo. Cada ícono del riel prende o apaga una capa del mapa y muestra
+cuántos elementos tiene, que es el dato que hace útil la decisión de encenderla.
+
+La navegación entre secciones se mudó a la barra superior. Dos rieles verticales
+peleando por el mismo borde confunden qué hace cada uno.
+
+**Archivos**
+
+| Archivo | Rol |
+|---|---|
+| `apps/web/src/lib/capas.ts` | Definición de capas: qué tipos agrupa cada una, color, radio |
+| `apps/web/src/lib/radar.ts` | Lecturas de entidades geolocalizadas y señales |
+| `apps/web/src/components/map/command-view.tsx` | Estado compartido entre riel, territorio y cajón |
+| `apps/web/src/components/map/layer-rail.tsx` | Riel de capas con conteo por capa |
+| `apps/web/src/components/map/territory-map.tsx` | Lienzo territorial |
+| `apps/web/src/components/senales/score-confianza.tsx` | Puntaje y confianza, representados distinto |
+| `apps/web/src/components/shell/app-shell.tsx` | Chasis: barra superior + área de trabajo completa |
+| `apps/web/src/components/shell/top-nav.tsx` | Navegación entre sub-superficies |
+| `apps/web/src/app/(app)/radar/page.tsx` | Pantalla de mando |
+| `apps/web/src/app/(app)/loading.tsx`, `error.tsx` | Estados de carga y de fallo |
+
+**Funciones y símbolos:** `CAPAS`, `CAPAS_POR_DEFECTO`, `capaDeTipo()`,
+`PuntoEntidad`, `SenalResumen`, `getPuntosEntidades()`, `getSenales()`,
+`CommandView()`, `LayerRail()`, `TerritoryMap()`, `proyectarY()`,
+`ScoreConfianza()`, `AppShell()`, `TopNav()`, `ListaSenales()`,
+`ListaEntidades()`.
+
+**Notas.**
+- El territorio usa proyección Mercator esférica sobre SVG, con el encuadre
+  calculado a partir de los propios puntos. Sin biblioteca de mapas: mientras no
+  exista el mosaico vectorial propio, dibujar calles y etiquetas de un proveedor
+  ajeno sería ruido geográfico y una dependencia que no queremos. El componente
+  ya trabaja en coordenadas geográficas, así que migrar es un cambio interno.
+- El puntaje se dibuja como barra continua porque es una magnitud; la confianza,
+  como cinco muescas, porque es una estimación gruesa y fingir precisión decimal
+  sería mentir sobre lo que sabemos.
+- El halo sólo aparece en lo que tiene señal o está seleccionado. Es el único
+  brillo de la interfaz.
+- Un punto sembrado para demostración lo dice en su panel. Nunca se presenta
+  como hecho de fuente.
+- La lista vacía explica las dos causas posibles, y una de ellas es que el
+  aislamiento por fila esté filtrando bien.
+
+---
+
+## MAD-0008 — pantalla de acceso, alta de cuenta y recuperación
+
+**Fecha:** 2026-09-12
+
+**Qué cambió.** El acceso pasa a ser una pantalla partida 40/60: formulario a la
+izquierda, presentación del producto a la derecha, con tres láminas navegables.
+Se suman alta de cuenta y recuperación de contraseña, y un pie con el aviso de
+derechos.
+
+**Archivos**
+
+| Archivo | Rol |
+|---|---|
+| `apps/web/src/app/(auth)/layout.tsx` | Partición 40/60, marca y pie |
+| `apps/web/src/app/(auth)/actions.ts` | Entrar, crear cuenta, recuperar, salir |
+| `apps/web/src/lib/auth-state.ts` | Estado que devuelven esas acciones |
+| `apps/web/src/app/(auth)/login/page.tsx` | Entrar |
+| `apps/web/src/app/(auth)/registro/page.tsx` | Crear cuenta |
+| `apps/web/src/app/(auth)/recuperar/page.tsx` | Recuperar acceso |
+| `apps/web/src/components/auth/auth-carousel.tsx` | Tres láminas con indicadores navegables |
+| `apps/web/src/components/auth/territory-backdrop.tsx` | Territorio abstracto en SVG |
+| `apps/web/src/components/auth/campos.tsx` | Campos, botón y mensajes |
+| `apps/web/src/components/auth/login-form.tsx`, `signup-form.tsx`, `recovery-form.tsx` | Formularios |
+
+**Funciones y símbolos:** `AuthLayout()`, `iniciarSesion()`, `crearCuenta()`,
+`recuperarAcceso()`, `cerrarSesion()`, `destinoSeguro()`, `AuthState`,
+`ESTADO_AUTH_INICIAL`, `AuthCarousel()`, `TerritoryBackdrop()`, `Campo()`,
+`CampoPassword()`, `BotonEnviar()`, `Mensaje()`.
+
+**Notas.**
+- El fondo del panel no es una imagen de archivo: es la misma gramática que usa
+  el producto —grilla técnica, trazas finas, nodos con densidad—, así que la
+  pantalla de acceso ya dice qué es esto antes de entrar. Dibujado a mano y
+  determinístico, sin pedidos a la red.
+- En pantallas angostas el panel de presentación se oculta entero en vez de
+  apilarse: un carrusel arriba del formulario empuja el campo de email fuera de
+  la vista.
+- El carrusel se detiene apenas el puntero o el foco entran. Nadie quiere que el
+  texto salte mientras lo está leyendo.
+- Los indicadores llevan número y etiqueta en vez de ser puntos mudos.
+- El error de credenciales es genérico a propósito: no confirma si un email
+  existe. La única excepción es la cuenta sin confirmar, porque ahí el usuario no
+  puede hacer nada solo y necesita saber a quién pedirle el alta.
+- La recuperación responde siempre lo mismo, haya o no cuenta con ese email: la
+  diferencia sería una forma de averiguar quién está registrado.
+- El alta entra directo si el proyecto no exige confirmación; si la exige, lo
+  dice en vez de dejar al usuario en una pantalla que no explica nada.
+- El estado de las acciones vive en su propio módulo porque un archivo de
+  acciones de servidor sólo puede exportar funciones async.
+
+---
+
+## MAD-0007 — sistema visual: paleta fría y modo oscuro permanente
+
+**Fecha:** 2026-09-12
+
+**Qué cambió.** La interfaz adopta su identidad definitiva: estación de trabajo
+de inteligencia territorial. Oscuro permanente, familia cromática fría, líneas
+finas, radios bajos y densidad alta.
+
+**Archivos:** `apps/web/src/app/globals.css`, `apps/web/src/app/layout.tsx`,
+`apps/web/src/app/icon.svg`.
+
+**Símbolos:** variables `--mad-*`, clases `.mad-panel`, `.mad-panel-active`,
+`.mad-grid`, `.mad-brackets`, `.mad-label`, `.mad-dot`, `.mad-halo`,
+`.mad-depth`.
+
+**Notas.**
+- Queda prohibido en toda la aplicación: naranja, ámbar, amarillo cálido,
+  violeta, degradados arcoíris o neón, cristal esmerilado, sombras pesadas y
+  esquinas muy redondeadas.
+- El verde se reserva para lo verificado, activo, confirmado o positivo. Y el
+  color nunca comunica solo: siempre hay texto o forma acompañando.
+- Los degradados sólo se usan cuando cumplen una función: profundidad de oscuro a
+  oscuro, o iluminación fría de una región seleccionada.
+- Cifras tabulares en toda la aplicación. Una columna de números que baila al
+  actualizarse es ruido, y acá los números son el contenido.
+- Tipografía sans técnica humanista, sin identidad monoespaciada.
+
+---
+
 ## MAD-0006 — secciones del radar con estado declarado
 
 **Fecha:** 2026-09-12
