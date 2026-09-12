@@ -64,6 +64,13 @@ export interface CamaraAmbiente {
   tipo: string | null;
   lon: number;
   lat: number;
+  /** Plataforma del reproductor incrustado. `null` si sólo tenemos la ubicación. */
+  embedProveedor: string | null;
+  /** Identificador de la emisión en esa plataforma. */
+  embedRef: string | null;
+  fuenteUrl: string | null;
+  /** `aproximada` cuando la ubicación se dedujo del nombre del lugar. */
+  precision: string;
 }
 
 export interface Diagnostico {
@@ -118,7 +125,10 @@ export const getEstadoRadar = cache(async (): Promise<EstadoRadar> => {
         'signal_id, orden, mad_evidence_links!inner(id, claim_kind, fragmento, limitaciones, registro_ref)',
       )
       .order('orden', { ascending: true }),
-    supabase.from('mad_ambient_cameras_geo').select('id, ubicacion, tipo, lon, lat').limit(5000),
+    supabase
+      .from('mad_ambient_cameras_geo')
+      .select('id, ubicacion, tipo, lon, lat, embed_proveedor, embed_ref, fuente_url, precision_ubicacion')
+      .limit(5000),
   ]);
 
   // ── Membresía ───────────────────────────────────────────────────────────
@@ -240,6 +250,10 @@ export const getEstadoRadar = cache(async (): Promise<EstadoRadar> => {
     tipo: fila.tipo,
     lon: Number(fila.lon),
     lat: Number(fila.lat),
+    embedProveedor: fila.embed_proveedor ?? null,
+    embedRef: fila.embed_ref ?? null,
+    fuenteUrl: fila.fuente_url ?? null,
+    precision: fila.precision_ubicacion ?? 'exacta',
   }));
 
   return { puntos, senales, razones, evidencias, camaras, diagnosticos };

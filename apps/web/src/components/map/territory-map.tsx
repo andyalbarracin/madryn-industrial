@@ -74,6 +74,7 @@ interface Props {
   entidadesConSenal: ReadonlySet<string>;
   seleccionada: string | null;
   onSeleccionar: (id: string | null) => void;
+  onSeleccionarCamara: (id: string | null) => void;
 }
 
 export function TerritoryMap({
@@ -83,6 +84,7 @@ export function TerritoryMap({
   entidadesConSenal,
   seleccionada,
   onSeleccionar,
+  onSeleccionarCamara,
 }: Props) {
   const contenedor = useRef<HTMLDivElement | null>(null);
   const mapa = useRef<InstanceType<typeof MotorMapa> | null>(null);
@@ -94,9 +96,11 @@ export function TerritoryMap({
   // actualiza en un efecto y no durante el render, que es cuando todavía no
   // está garantizado que el render vaya a confirmarse.
   const alSeleccionar = useRef(onSeleccionar);
+  const alSeleccionarCamara = useRef(onSeleccionarCamara);
   useEffect(() => {
     alSeleccionar.current = onSeleccionar;
-  }, [onSeleccionar]);
+    alSeleccionarCamara.current = onSeleccionarCamara;
+  }, [onSeleccionar, onSeleccionarCamara]);
 
   const activas = useMemo(() => new Set(capasActivas), [capasActivas]);
 
@@ -138,7 +142,7 @@ export function TerritoryMap({
             type: 'Feature' as const,
             id: camara.id,
             geometry: { type: 'Point' as const, coordinates: [camara.lon, camara.lat] },
-            properties: { ubicacion: camara.ubicacion, tipo: camara.tipo ?? '' },
+            properties: { id: camara.id, ubicacion: camara.ubicacion },
           }))
         : [],
     }),
@@ -314,6 +318,17 @@ export function TerritoryMap({
           'circle-stroke-width': 0.5,
           'circle-stroke-color': '#A7C7F7',
         },
+      });
+
+      motor.on('click', 'camaras', (evento) => {
+        const id = evento.features?.[0]?.properties?.['id'];
+        if (typeof id === 'string') alSeleccionarCamara.current(id);
+      });
+      motor.on('mouseenter', 'camaras', () => {
+        motor.getCanvas().style.cursor = 'pointer';
+      });
+      motor.on('mouseleave', 'camaras', () => {
+        motor.getCanvas().style.cursor = '';
       });
 
       motor.on('click', 'nodos', (evento) => {

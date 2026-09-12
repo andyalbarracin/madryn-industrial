@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import { LayerRail } from '@/components/map/layer-rail';
+import { PanelCamara } from '@/components/map/panel-camara';
 import { PanelDiagnostico } from '@/components/map/panel-diagnostico';
 import { TerritoryMap } from '@/components/map/territory-map';
 import { PanelSenal } from '@/components/senales/panel-senal';
@@ -52,6 +53,7 @@ export function CommandView({
   const [cajon, setCajon] = useState<ClaveCajon>('senales');
   const [cajonAbierto, setCajonAbierto] = useState(true);
   const [senalAbierta, setSenalAbierta] = useState<string | null>(null);
+  const [camaraAbierta, setCamaraAbierta] = useState<string | null>(null);
 
   const entidadesConSenal = useMemo(
     () => new Set(senales.map((s) => s.entidadId).filter((id): id is string => id !== null)),
@@ -81,6 +83,7 @@ export function CommandView({
   };
 
   const senalSeleccionada = senales.find((s) => s.id === senalAbierta) ?? null;
+  const camaraSeleccionada = camaras.find((c) => c.id === camaraAbierta) ?? null;
   const entidad = puntos.find((p) => p.id === seleccionada) ?? null;
   const senalesDeEntidad = entidad ? senales.filter((s) => s.entidadId === entidad.id) : [];
 
@@ -98,9 +101,14 @@ export function CommandView({
             entidadesConSenal={entidadesConSenal}
             seleccionada={seleccionada}
             onSeleccionar={setSeleccionada}
+            onSeleccionarCamara={setCamaraAbierta}
           />
 
           <PanelDiagnostico diagnosticos={diagnosticos} />
+
+          {camaraSeleccionada ? (
+            <PanelCamara camara={camaraSeleccionada} onCerrar={() => setCamaraAbierta(null)} />
+          ) : null}
 
           {senalSeleccionada ? (
             <PanelSenal

@@ -13,6 +13,40 @@ Fecha · Qué cambió · Archivos · Funciones · Notas
 
 ---
 
+## MAD-0016 — cámaras con transmisión en vivo por reproductor oficial
+
+**Fecha:** 2026-09-12
+
+**Qué cambió.** La capa de cámaras aprende a mostrar video, y lo hace por el
+único camino que no compromete al producto: el reproductor incrustado oficial de
+la plataforma donde el organismo publica.
+
+**Por qué es legítimo, y hacen falta las tres cosas juntas:** el contenido es de
+un organismo oficial que lo publicó para que se vea; se usa el mecanismo de
+distribución que la plataforma provee, y el dueño del canal puede desactivarlo
+cuando quiera; y no se aloja ni se retransmite nada — la reproducción la sirve la
+plataforma y las visualizaciones se le cuentan a quien publica.
+
+**Lo que no se hace:** extraer la dirección del flujo para reproducirlo en un
+reproductor propio. Saltea los términos de la plataforma y le roba la métrica al
+organismo, por más que técnicamente se pueda.
+
+**Archivos:** `apps/web/src/components/map/panel-camara.tsx`,
+`apps/web/src/components/map/territory-map.tsx`,
+`apps/web/src/components/map/command-view.tsx`, `apps/web/src/lib/radar.ts`.
+
+**Funciones y símbolos:** `PanelCamara()`, y en `CamaraAmbiente` los campos
+`embedProveedor`, `embedRef`, `fuenteUrl` y `precision`.
+
+**Notas.**
+- Una cámara sin transmisión registrada lo dice con todas las letras: "sabemos
+  dónde está; no estamos mostrando lo que ve". La ausencia de video es
+  información, no un hueco.
+- La precisión de la ubicación es un campo del dato. Una coordenada deducida del
+  nombre de un lugar se marca como aproximada y la pantalla lo muestra. El
+  producto no presenta una estimación como si fuera una medición.
+- El marco incrustado usa el dominio sin cookies de seguimiento de la plataforma.
+
 ## MAD-0015 — superficie de entidades y capa de cámaras públicas
 
 **Fecha:** 2026-09-12
