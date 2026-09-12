@@ -1,0 +1,81 @@
+# ── Material de apoyo local: NO es parte del proyecto ──
+# La documentación de trabajo, el SQL que se pega a mano en Supabase y cualquier
+# material consultado viven UN NIVEL ARRIBA de este repo, así que git no los ve.
+# Estas entradas son el cinturón de seguridad por si algo se copia acá adentro.
+.docs/
+.notas/
+referencia/
+*-master/
+
+# ── Notas de herramientas de asistencia ──
+# El repo contiene código nuestro y nada más. Las notas de trabajo no se
+# commitean: viven fuera del repo.
+AGENTS.md
+CLAUDE.md
+**/AGENTS.md
+**/CLAUDE.md
+.claude/
+.cursor/
+.aider*
+.github/copilot-instructions.md
+
+# ── Secretos ──
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ── Node ──
+node_modules/
+.pnpm-store/
+npm-debug.log*
+pnpm-debug.log*
+
+# ── Next.js ──
+.next/
+out/
+build/
+next-env.d.ts
+*.tsbuildinfo
+
+# ── Turborepo ──
+.turbo/
+
+# ── Build de los packages del workspace ──
+# `packages/core` emite `dist/` (lo consume apps/web por `exports`). Se
+# regenera con `pnpm -w build`, así que no va al repo.
+packages/*/dist/
+
+# ── Vercel ──
+.vercel
+
+# ── Tests / coverage ──
+coverage/
+
+# ── Python (ingesta) ──
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# ── Datos locales: nada de RAW ni extractos en el repo ──
+# El RAW vive en R2 (ADR-002) y el basemap en object storage (ADR-006).
+ingestion/data/
+*.pmtiles
+*.mbtiles
+*.shp
+*.dbf
+*.shx
+
+# ── Artefactos vendorizados que se regeneran en prebuild ──
+apps/web/public/vendor/
+
+# ── OS / editor ──
+.DS_Store
+Thumbs.db
+.idea/
+*.swp

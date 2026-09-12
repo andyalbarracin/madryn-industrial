@@ -1,0 +1,10 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Sólo estos paquetes tienen permiso de correr build scripts al instalar
+# (pnpm ≥10 los bloquea por default; es una defensa de supply chain).
+# esbuild → binario que usa Vitest. unrs-resolver → resolver de eslint-config-next.
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true

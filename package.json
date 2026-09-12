@@ -1,0 +1,22 @@
+{
+  "name": "madryn",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MADRYN — plataforma de inteligencia industrial del ecosistema ZAIRE Technologies",
+  "packageManager": "pnpm@11.5.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "dev": "turbo run dev",
+    "gate": "pnpm -w typecheck && pnpm -w lint && pnpm -w build && pnpm -w test"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.3"
+  }
+}
