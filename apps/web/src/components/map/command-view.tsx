@@ -3,10 +3,11 @@
 import { useMemo, useState } from 'react';
 
 import { LayerRail } from '@/components/map/layer-rail';
+import { PanelDiagnostico } from '@/components/map/panel-diagnostico';
 import { TerritoryMap } from '@/components/map/territory-map';
 import { ScoreConfianza } from '@/components/senales/score-confianza';
 import { capaDeTipo, CAPAS_POR_DEFECTO, type ClaveCapa } from '@/lib/capas';
-import type { PuntoEntidad, SenalResumen } from '@/lib/radar';
+import type { Diagnostico, PuntoEntidad, SenalResumen } from '@/lib/radar';
 
 /**
  * Pantalla de mando: riel de capas, territorio y cajón de señales.
@@ -26,9 +27,11 @@ type ClaveCajon = (typeof CAJONES)[number]['clave'];
 export function CommandView({
   puntos,
   senales,
+  diagnosticos,
 }: {
   puntos: readonly PuntoEntidad[];
   senales: readonly SenalResumen[];
+  diagnosticos: readonly Diagnostico[];
 }) {
   const [capas, setCapas] = useState<readonly ClaveCapa[]>(CAPAS_POR_DEFECTO);
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
@@ -77,6 +80,8 @@ export function CommandView({
             seleccionada={seleccionada}
             onSeleccionar={setSeleccionada}
           />
+
+          <PanelDiagnostico diagnosticos={diagnosticos} />
 
           {/* Panel de detalle: flota sobre el territorio, no lo desplaza. */}
           {entidad ? (

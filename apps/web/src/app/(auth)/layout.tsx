@@ -13,8 +13,21 @@ import { TerritoryBackdrop } from '@/components/auth/territory-backdrop';
  */
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="grid min-h-svh lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-      {/* ── 40 · Formulario ─────────────────────────────────────────────── */}
+    <div className="grid min-h-svh lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      {/* ── 60 · Presentación (izquierda) ───────────────────────────────── */}
+      <aside className="relative hidden overflow-hidden border-r border-mad-line bg-mad-surface-inset lg:block">
+        <TerritoryBackdrop />
+        {/* Velo inferior: el texto tiene que leerse sobre el territorio. */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-linear-to-t from-[#070A0E] via-[#070A0E]/70 to-transparent"
+        />
+        <div className="relative h-full">
+          <AuthCarousel />
+        </div>
+      </aside>
+
+      {/* ── 40 · Formulario (derecha) ───────────────────────────────────── */}
       <section className="mad-depth flex flex-col justify-between px-6 py-8 sm:px-10 lg:px-12">
         <header className="flex items-center gap-3">
           <span className="mad-brackets inline-flex h-7 w-7 items-center justify-center">
@@ -47,19 +60,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </p>
         </footer>
       </section>
-
-      {/* ── 60 · Presentación ───────────────────────────────────────────── */}
-      <aside className="relative hidden overflow-hidden border-l border-mad-line bg-mad-surface-inset lg:block">
-        <TerritoryBackdrop />
-        {/* Velo inferior: el texto tiene que leerse sobre el territorio. */}
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-gradient-to-t from-[#070A0E] via-[#070A0E]/70 to-transparent"
-        />
-        <div className="relative h-full">
-          <AuthCarousel />
-        </div>
-      </aside>
     </div>
   );
 }

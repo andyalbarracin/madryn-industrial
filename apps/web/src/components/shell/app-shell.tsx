@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 
 import { cerrarSesion } from '@/app/(auth)/actions';
+import { Marquesina } from '@/components/shell/marquesina';
 import { TopNav } from '@/components/shell/top-nav';
 import type { MadMembership } from '@/lib/dal';
 import type { MadNavItem } from '@/lib/routes';
+import { getDatosVivos } from '@/lib/vivo';
 
 /**
  * Chasis de la aplicación: barra superior y área de trabajo a pantalla completa.
@@ -15,7 +17,7 @@ import type { MadNavItem } from '@/lib/routes';
  * La barra dice **de qué espacio de trabajo** son los datos. Con aislamiento por
  * fila de por medio, eso no es decoración: responde "¿esto que veo es mío?".
  */
-export function AppShell({
+export async function AppShell({
   children,
   items,
   email,
@@ -26,6 +28,8 @@ export function AppShell({
   email: string | undefined;
   workspace: MadMembership | null;
 }) {
+  const datosVivos = await getDatosVivos();
+
   return (
     <div className="flex h-svh flex-col overflow-hidden">
       <header className="flex shrink-0 items-center gap-6 border-b border-mad-line bg-mad-surface px-4">
@@ -80,6 +84,8 @@ export function AppShell({
       </header>
 
       <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
+
+      <Marquesina items={datosVivos} />
     </div>
   );
 }

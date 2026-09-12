@@ -1,37 +1,50 @@
 'use client';
 
-import { useMemo } from 'react';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
-import { capaDeTipo, CAPAS, type ClaveCapa } from '@/lib/capas';
+import { useMemo, useState } from 'react';
+import Map, { Layer, NavigationControl, ScaleControl, Source, type MapLayerMouseEvent } from 'react-map-gl/maplibre';
+
+import { capaDeTipo, type ClaveCapa } from '@/lib/capas';
+import { publicEnv } from '@/lib/env';
 import type { PuntoEntidad } from '@/lib/radar';
 
 /**
- * Lienzo territorial.
+ * Territorio real: mapa vectorial con calles, costas y topónimos.
  *
- * Proyección Mercator esférica sobre SVG, con el encuadre calculado a partir de
- * los propios puntos. Sin biblioteca de mapas y sin mapa base todavía: mientras
- * no exista el mosaico vectorial propio, dibujar calles y etiquetas de un
- * proveedor ajeno sería ruido geográfico y además una dependencia que no
- * queremos. Lo que importa acá son los nodos, no el fondo.
+ * El estilo del mapa base sale de `NEXT_PUBLIC_BASEMAP_STYLE_URL`. Hoy apunta a
+ * un servicio de mosaicos vectoriales libre derivado de datos abiertos, sin
+ * clave. El destino sigue siendo el mosaico propio: cuando exista, se cambia la
+ * variable y este componente no se entera.
  *
- * **Gancho declarado:** mapa vectorial con mosaico propio. Este componente ya
- * trabaja en coordenadas geográficas, así que el cambio es interno.
+ * Los nodos se dibujan con capas nativas del motor —no marcadores de HTML— para
+ * que miles de puntos no maten el desplazamiento.
  */
 
-const ANCHO = 1000;
-const ALTO = 720;
-const MARGEN = 48;
+const ESTILO_POR_DEFECTO = 'https://tiles.openfreemap.org/styles/dark';
 
-/** Mercator esférica: la latitud se deforma, la longitud es lineal. */
-function proyectarY(lat: number): number {
-  const rad = (lat * Math.PI) / 180;
-  return Math.log(Math.tan(Math.PI / 4 + rad / 2));
-}
+/** Encuadre inicial: Argentina entera. */
+const VISTA_INICIAL = { longitude: -64.5, latitude: -38.5, zoom: 3.6 } as const;
+
+const COLOR_POR_CAPA: Record<ClaveCapa, string> = {
+  senales: '#A7C7F7',
+  proyectos: '#4F7CD9',
+  yacimientos: '#4F7CD9',
+  pozos: '#566377',
+  infraestructura: '#566377',
+};
+
+const RADIO_POR_CAPA: Record<ClaveCapa, number> = {
+  senales: 6,
+  proyectos: 5,
+  yacimientos: 4.5,
+  pozos: 3,
+  infraestructura: 3.5,
+};
 
 interface Props {
   puntos: readonly PuntoEntidad[];
   capasActivas: readonly ClaveCapa[];
-  /** Entidades que tienen al menos una señal abierta. */
   entidadesConSenal: ReadonlySet<string>;
   seleccionada: string | null;
   onSeleccionar: (id: string | null) => void;
@@ -44,145 +57,112 @@ export function TerritoryMap({
   seleccionada,
   onSeleccionar,
 }: Props) {
+  const [cursor, setCursor] = useState<'grab' | 'pointer'>('grab');
   const activas = useMemo(() => new Set(capasActivas), [capasActivas]);
 
-  const dibujables = useMemo(() => {
-    if (puntos.length === 0) return [];
+  /** Un punto pertenece a la capa de señales si tiene una; si no, a la de su tipo. */
+  const coleccion = useMemo(() => {
+    const features = puntos
+      .map((punto) => {
+        const conSenal = entidadesConSenal.has(punto.id);
+        const capa: ClaveCapa | null = conSenal ? 'senales' : capaDeTipo(punto.tipo);
+        return { punto, capa, conSenal };
+      })
+      .filter((f): f is { punto: PuntoEntidad; capa: ClaveCapa; conSenal: boolean } => f.capa !== null)
+      .filter((f) => activas.has(f.capa))
+      .map(({ punto, capa, conSenal }) => ({
+        type: 'Feature' as const,
+        id: punto.id,
+        geometry: { type: 'Point' as const, coordinates: [punto.lon, punto.lat] },
+        properties: {
+          id: punto.id,
+          nombre: punto.nombre,
+          tipo: punto.tipo,
+          capa,
+          color: COLOR_POR_CAPA[capa],
+          radio: RADIO_POR_CAPA[capa],
+          conSenal: conSenal ? 1 : 0,
+          elegida: punto.id === seleccionada ? 1 : 0,
+        },
+      }));
 
-    const lons = puntos.map((p) => p.lon);
-    const ys = puntos.map((p) => proyectarY(p.lat));
-    const lonMin = Math.min(...lons);
-    const lonMax = Math.max(...lons);
-    const yMin = Math.min(...ys);
-    const yMax = Math.max(...ys);
+    return { type: 'FeatureCollection' as const, features };
+  }, [puntos, activas, entidadesConSenal, seleccionada]);
 
-    // Un solo punto, o todos alineados: se evita dividir por cero.
-    const anchoGeo = lonMax - lonMin || 1;
-    const altoGeo = yMax - yMin || 1;
-
-    // Escala única para los dos ejes: mantiene la proporción del territorio.
-    const escala = Math.min((ANCHO - MARGEN * 2) / anchoGeo, (ALTO - MARGEN * 2) / altoGeo);
-    const desplazX = (ANCHO - anchoGeo * escala) / 2;
-    const desplazY = (ALTO - altoGeo * escala) / 2;
-
-    return puntos.map((punto) => ({
-      punto,
-      x: desplazX + (punto.lon - lonMin) * escala,
-      // El eje Y del SVG crece hacia abajo; la latitud, hacia arriba.
-      y: desplazY + (yMax - proyectarY(punto.lat)) * escala,
-    }));
-  }, [puntos]);
-
-  const visibles = dibujables.filter(({ punto }) => {
-    const conSenal = entidadesConSenal.has(punto.id);
-    if (conSenal && activas.has('senales')) return true;
-    const capa = capaDeTipo(punto.tipo);
-    return capa !== null && activas.has(capa);
-  });
-
-  if (puntos.length === 0) {
-    return (
-      <div className="mad-grid flex h-full items-center justify-center">
-        <div className="max-w-md px-6 text-center">
-          <p className="mad-label">Territorio</p>
-          <p className="mt-3 text-sm text-mad-fg-dim">
-            No hay entidades geolocalizadas todavía. Aparecen acá apenas la primera ingesta escriba
-            entidades con coordenadas.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const alHacerClick = (evento: MapLayerMouseEvent) => {
+    const rasgo = evento.features?.[0];
+    const id = rasgo?.properties?.['id'];
+    onSeleccionar(typeof id === 'string' && id !== seleccionada ? id : null);
+  };
 
   return (
-    <svg
-      viewBox={`0 0 ${ANCHO} ${ALTO}`}
-      preserveAspectRatio="xMidYMid meet"
-      className="h-full w-full"
-      role="img"
-      aria-label={`Mapa territorial con ${visibles.length} entidades visibles`}
-      onClick={() => onSeleccionar(null)}
+    <Map
+      initialViewState={VISTA_INICIAL}
+      mapStyle={publicEnv.basemapStyleUrl || ESTILO_POR_DEFECTO}
+      style={{ width: '100%', height: '100%' }}
+      interactiveLayerIds={['nodos']}
+      onClick={alHacerClick}
+      onMouseEnter={() => setCursor('pointer')}
+      onMouseLeave={() => setCursor('grab')}
+      cursor={cursor}
+      attributionControl={{ compact: true }}
     >
-      <defs>
-        <pattern id="mapa-malla" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path d="M40 0H0V40" fill="none" stroke="#1E2733" strokeWidth="1" />
-        </pattern>
-      </defs>
+      <NavigationControl position="bottom-right" showCompass={false} />
+      <ScaleControl position="bottom-left" unit="metric" />
 
-      <rect width={ANCHO} height={ALTO} fill="url(#mapa-malla)" />
-
-      {/* Cruz de encuadre en las cuatro esquinas del área útil. */}
-      <g stroke="#2A3441" strokeWidth="1" fill="none">
-        <path d={`M${MARGEN} ${MARGEN / 2}V${MARGEN}H${MARGEN * 1.6}`} />
-        <path d={`M${ANCHO - MARGEN * 1.6} ${MARGEN}H${ANCHO - MARGEN}V${MARGEN / 2}`} />
-        <path d={`M${MARGEN} ${ALTO - MARGEN / 2}V${ALTO - MARGEN}H${MARGEN * 1.6}`} />
-        <path
-          d={`M${ANCHO - MARGEN * 1.6} ${ALTO - MARGEN}H${ANCHO - MARGEN}V${ALTO - MARGEN / 2}`}
+      <Source id="entidades" type="geojson" data={coleccion}>
+        {/* Halo: sólo para lo que tiene señal o está seleccionado. Es el único
+            brillo de la interfaz. */}
+        <Layer
+          id="halos"
+          type="circle"
+          filter={['any', ['==', ['get', 'conSenal'], 1], ['==', ['get', 'elegida'], 1]]}
+          paint={{
+            'circle-radius': ['*', ['get', 'radio'], 3],
+            'circle-color': ['get', 'color'],
+            'circle-opacity': 0.16,
+          }}
         />
-      </g>
 
-      {/* Los puntos van del más chico al más grande para que nada quede tapado. */}
-      <g>
-        {visibles
-          .slice()
-          .sort((a, b) => {
-            const ra = entidadesConSenal.has(a.punto.id) ? 9 : 0;
-            const rb = entidadesConSenal.has(b.punto.id) ? 9 : 0;
-            return ra - rb;
-          })
-          .map(({ punto, x, y }) => {
-            const conSenal = entidadesConSenal.has(punto.id);
-            const capa = CAPAS.find((c) => c.clave === (conSenal ? 'senales' : capaDeTipo(punto.tipo)));
-            const radio = capa?.radio ?? 2;
-            const color = capa?.color ?? 'var(--mad-steel)';
-            const elegida = seleccionada === punto.id;
+        <Layer
+          id="nodos"
+          type="circle"
+          paint={{
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              3,
+              ['*', ['get', 'radio'], 0.6],
+              10,
+              ['get', 'radio'],
+            ],
+            'circle-color': ['get', 'color'],
+            'circle-opacity': ['case', ['==', ['get', 'conSenal'], 1], 1, 0.8],
+            'circle-stroke-width': ['case', ['==', ['get', 'elegida'], 1], 1.5, 0],
+            'circle-stroke-color': '#EAEFF4',
+          }}
+        />
 
-            return (
-              <g
-                key={punto.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSeleccionar(elegida ? null : punto.id);
-                }}
-                className="cursor-pointer"
-              >
-                {/* Halo: sólo para lo que tiene señal o está seleccionado. */}
-                {conSenal || elegida ? (
-                  <circle cx={x} cy={y} r={radio * 3.4} fill={color} fillOpacity={0.12} />
-                ) : null}
-
-                <circle cx={x} cy={y} r={radio} fill={color} fillOpacity={conSenal ? 1 : 0.75} />
-
-                {elegida ? (
-                  <>
-                    <circle
-                      cx={x}
-                      cy={y}
-                      r={radio + 6}
-                      fill="none"
-                      stroke="var(--mad-highlight)"
-                      strokeWidth="1"
-                    />
-                    <text
-                      x={x + radio + 12}
-                      y={y + 4}
-                      fill="var(--mad-fg)"
-                      fontSize="12"
-                      className="pointer-events-none"
-                    >
-                      {punto.nombre}
-                    </text>
-                  </>
-                ) : null}
-
-                <title>
-                  {punto.nombre} · {punto.tipo}
-                  {punto.provincia ? ` · ${punto.provincia}` : ''}
-                </title>
-              </g>
-            );
-          })}
-      </g>
-    </svg>
+        {/* El nombre aparece sólo con acercamiento: a escala país sería ilegible. */}
+        <Layer
+          id="etiquetas"
+          type="symbol"
+          minzoom={6}
+          layout={{
+            'text-field': ['get', 'nombre'],
+            'text-size': 11,
+            'text-offset': [0, 1.2],
+            'text-anchor': 'top',
+            'text-allow-overlap': false,
+          }}
+          paint={{
+            'text-color': '#EAEFF4',
+            'text-halo-color': '#0B0F14',
+            'text-halo-width': 1.2,
+          }}
+        />
+      </Source>
+    </Map>
   );
 }

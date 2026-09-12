@@ -17,6 +17,8 @@ export const publicEnv = {
   enabledFeatures: process.env.NEXT_PUBLIC_ENABLED_FEATURES,
   basemapUrl: process.env.NEXT_PUBLIC_BASEMAP_URL,
   basemapPmtiles: process.env.NEXT_PUBLIC_BASEMAP_PMTILES,
+  /** Estilo del mapa base. Vacío = se usa el servicio libre por defecto. */
+  basemapStyleUrl: process.env.NEXT_PUBLIC_BASEMAP_STYLE_URL,
 } as const;
 
 /**

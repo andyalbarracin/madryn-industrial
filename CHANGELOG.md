@@ -13,6 +13,61 @@ Fecha · Qué cambió · Archivos · Funciones · Notas
 
 ---
 
+## MAD-0010 — mapa vectorial real, marquesina en vivo y diagnóstico visible
+
+**Fecha:** 2026-09-12
+
+**Qué cambió.** Tres cosas que hacían que la pantalla de mando no se pudiera usar.
+
+**1. El mapa es un mapa.** Motor vectorial con calles, costas, topónimos,
+desplazamiento y acercamiento. Los nodos se dibujan con capas nativas del motor,
+no con marcadores de HTML, para que miles de puntos no maten el desplazamiento.
+El estilo del mapa base sale de una variable de entorno: hoy apunta a un servicio
+de mosaicos libre derivado de datos abiertos, sin clave, y el día que exista el
+mosaico propio se cambia la variable sin tocar el componente.
+
+**2. Marquesina inferior.** Contexto permanente en la base de la pantalla: hora
+universal, estado, clima con viento en los tres polos industriales que seguimos, y
+sismos recientes del Cono Sur. Datos reales de fuentes públicas sin clave,
+consultados desde el servidor y cacheados — el navegador del usuario no habla con
+nadie más que con nosotros.
+
+**3. Los fallos se muestran.** La pantalla decía "no hay entidades
+geolocalizadas" cuando el problema real era que faltaba aplicar un archivo de
+esquema. Ahora cada lectura que falla vuelve como diagnóstico con el motivo y la
+acción concreta, en un panel sobre el mapa que se puede cerrar.
+
+**Archivos**
+
+| Archivo | Rol |
+|---|---|
+| `apps/web/src/components/map/territory-map.tsx` | Mapa vectorial con capas nativas |
+| `apps/web/src/lib/vivo.ts` | Clima y sismos desde fuentes públicas |
+| `apps/web/src/components/shell/marquesina.tsx` | Marquesina inferior |
+| `apps/web/src/components/map/panel-diagnostico.tsx` | Qué falta y qué hacer |
+| `apps/web/src/lib/radar.ts` | Lectura con diagnóstico en vez de silencio |
+| `apps/web/src/app/(auth)/layout.tsx` | Presentación a la izquierda, formulario a la derecha |
+
+**Funciones y símbolos:** `getEstadoRadar()`, `EstadoRadar`, `Diagnostico`,
+`esObjetoInexistente()`, `getDatosVivos()`, `ItemVivo`, `Marquesina()`,
+`PanelDiagnostico()`.
+
+**Notas.**
+- Devolver una lista vacía y una frase genérica manda a buscar el problema al
+  lugar equivocado: parece que faltan datos cuando falta aplicar un archivo. El
+  silencio es el peor diagnóstico.
+- Si una fuente externa no responde, su tramo desaparece de la marquesina y el
+  resto sigue. Una marquesina que se cae entera porque un servicio ajeno tosió es
+  peor que una a la que le falta un dato.
+- El reloj arranca vacío y se llena en el navegador: la hora del servidor y la
+  del cliente difieren, y renderizar dos valores distintos rompe la hidratación.
+- El viento se marca en tono de atención a partir de 40 km/h. No es clima de
+  fondo: es el umbral que frena izaje y trabajo en altura.
+- Los nombres de las entidades aparecen recién al acercarse. A escala país serían
+  ilegibles.
+
+---
+
 ## MAD-0009 — pantalla de mando: riel de capas y territorio
 
 **Fecha:** 2026-09-12

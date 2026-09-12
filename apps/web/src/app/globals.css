@@ -207,6 +207,28 @@ body {
     linear-gradient(180deg, var(--mad-charcoal) 0%, #070a0e 100%);
 }
 
+/* Marquesina: desplazamiento continuo. La secuencia va duplicada en el marcado,
+   así que recorrer la mitad exacta cierra el ciclo sin costura. */
+@keyframes mad-desplazar {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.mad-marquesina {
+  animation: mad-desplazar 90s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Sin movimiento la marquesina se lee desplazándola a mano. */
+  .mad-marquesina {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
