@@ -1,0 +1,83 @@
+@import 'tailwindcss';
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Tokens `--zaire-*`
+
+   Paleta BASE y provisoria. Cuando llegue el design system de la Suite se
+   reemplazan **los valores de acá y nada más**: los componentes usan los
+   tokens, nunca un hex suelto.
+
+   Dos tokens son de producto, no de estética: `--zaire-score` y
+   `--zaire-confidence`. Score (0–100) y confianza (0–1) son campos separados
+   y se muestran separados (regla de oro 6), así que tampoco comparten color.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --zaire-bg: #f6f8f9;
+  --zaire-surface: #ffffff;
+  --zaire-surface-2: #eef1f3;
+  --zaire-border: #d7dde2;
+  --zaire-fg: #101619;
+  --zaire-fg-muted: #59656e;
+
+  /* Petróleo: energía + geo, el núcleo de MADRYN. */
+  --zaire-primary: #0e5a6e;
+  --zaire-primary-fg: #ffffff;
+  --zaire-accent: #b86e18;
+
+  --zaire-ok: #1b7548;
+  --zaire-warn: #9a7200;
+  --zaire-danger: #a8322a;
+
+  --zaire-score: #0e5a6e;
+  --zaire-confidence: #5c4fa3;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --zaire-bg: #0b0f12;
+    --zaire-surface: #11171b;
+    --zaire-surface-2: #1a2228;
+    --zaire-border: #2a343b;
+    --zaire-fg: #e5eaed;
+    --zaire-fg-muted: #91a0aa;
+
+    --zaire-primary: #3aa8c4;
+    --zaire-primary-fg: #04161c;
+    --zaire-accent: #dd9340;
+
+    --zaire-ok: #3fae74;
+    --zaire-warn: #d3a42b;
+    --zaire-danger: #e1675c;
+
+    --zaire-score: #3aa8c4;
+    --zaire-confidence: #a293e6;
+  }
+}
+
+/* Expone los tokens como utilidades de Tailwind: `bg-zaire-surface`,
+   `text-zaire-fg-muted`, `border-zaire-border`, etc. */
+@theme inline {
+  --color-zaire-bg: var(--zaire-bg);
+  --color-zaire-surface: var(--zaire-surface);
+  --color-zaire-surface-2: var(--zaire-surface-2);
+  --color-zaire-border: var(--zaire-border);
+  --color-zaire-fg: var(--zaire-fg);
+  --color-zaire-fg-muted: var(--zaire-fg-muted);
+  --color-zaire-primary: var(--zaire-primary);
+  --color-zaire-primary-fg: var(--zaire-primary-fg);
+  --color-zaire-accent: var(--zaire-accent);
+  --color-zaire-ok: var(--zaire-ok);
+  --color-zaire-warn: var(--zaire-warn);
+  --color-zaire-danger: var(--zaire-danger);
+  --color-zaire-score: var(--zaire-score);
+  --color-zaire-confidence: var(--zaire-confidence);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--zaire-bg);
+  color: var(--zaire-fg);
+}

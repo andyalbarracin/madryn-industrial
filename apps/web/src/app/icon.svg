@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="MADRYN">
+  <!-- Marca de MADRYN: un barrido de radar. Dos arcos de alcance, el haz que
+       barre y un punto detectado fuera del arco interno — la señal que aparece
+       afuera y todavía no estaba en tu radar. -->
+  <rect width="32" height="32" rx="7" fill="#0e5a6e" />
+  <g fill="none" stroke="#ffffff" stroke-linecap="round">
+    <path d="M6 24a12 12 0 0 1 20-9" stroke-opacity=".34" stroke-width="1.6" />
+    <path d="M11 24a7 7 0 0 1 10.6-6" stroke-opacity=".55" stroke-width="1.6" />
+    <path d="M8.5 24h15" stroke-opacity=".28" stroke-width="1.4" />
+    <path d="M16 24 24.4 9.8" stroke-width="2.1" />
+  </g>
+  <circle cx="22.3" cy="12.4" r="2.5" fill="#dd9340" />
+</svg>
