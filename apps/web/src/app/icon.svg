@@ -1,13 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="MADRYN">
-  <!-- Marca de MADRYN: un barrido de radar. Dos arcos de alcance, el haz que
-       barre y un punto detectado fuera del arco interno — la señal que aparece
-       afuera y todavía no estaba en tu radar. -->
-  <rect width="32" height="32" rx="7" fill="#0e5a6e" />
-  <g fill="none" stroke="#ffffff" stroke-linecap="round">
-    <path d="M6 24a12 12 0 0 1 20-9" stroke-opacity=".34" stroke-width="1.6" />
-    <path d="M11 24a7 7 0 0 1 10.6-6" stroke-opacity=".55" stroke-width="1.6" />
-    <path d="M8.5 24h15" stroke-opacity=".28" stroke-width="1.4" />
-    <path d="M16 24 24.4 9.8" stroke-width="2.1" />
+  <!-- Marca de MADRYN: un barrido de radar sobre territorio. Dos arcos de
+       alcance, el haz que barre y un nodo detectado fuera del arco interno —
+       la señal que aparece afuera y todavía no estaba en tu radar. -->
+  <rect width="32" height="32" rx="6" fill="#0B0F14" />
+  <rect x="0.5" y="0.5" width="31" height="31" rx="5.5" fill="none" stroke="#2A3441" />
+  <g fill="none" stroke="#4F7CD9" stroke-linecap="round">
+    <path d="M6 24a12 12 0 0 1 20-9" stroke-opacity=".38" stroke-width="1.5" />
+    <path d="M11 24a7 7 0 0 1 10.6-6" stroke-opacity=".6" stroke-width="1.5" />
+    <path d="M8.5 24h15" stroke="#566377" stroke-opacity=".7" stroke-width="1.2" />
+    <path d="M16 24 24.4 9.8" stroke="#A7C7F7" stroke-width="2" />
   </g>
-  <circle cx="22.3" cy="12.4" r="2.5" fill="#dd9340" />
+  <circle cx="22.3" cy="12.4" r="3.4" fill="#4F7CD9" fill-opacity=".28" />
+  <circle cx="22.3" cy="12.4" r="1.9" fill="#A7C7F7" />
 </svg>

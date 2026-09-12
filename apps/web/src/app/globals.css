@@ -1,83 +1,218 @@
 @import 'tailwindcss';
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Tokens `--zaire-*`
+   SISTEMA VISUAL MADRYN
 
-   Paleta BASE y provisoria. Cuando llegue el design system de la Suite se
-   reemplazan **los valores de acá y nada más**: los componentes usan los
-   tokens, nunca un hex suelto.
+   Estación de trabajo de inteligencia territorial industrial. Oscuro
+   permanente, paleta fría, densidad alta, líneas finas.
 
-   Dos tokens son de producto, no de estética: `--zaire-score` y
-   `--zaire-confidence`. Score (0–100) y confianza (0–1) son campos separados
-   y se muestran separados (regla de oro 6), así que tampoco comparten color.
+   Prohibido en toda la aplicación: naranja, ámbar, amarillo cálido, violeta,
+   degradados arcoíris o neón, glassmorphism, sombras pesadas, burbujas
+   flotantes, esquinas muy redondeadas.
+
+   Dos tokens son de producto y no de estética: `--mad-score` y
+   `--mad-confidence`. El puntaje y la confianza son campos distintos y se
+   muestran distinto. Están en la misma familia azul pero no son el mismo azul,
+   y nunca se comunican sólo con color: siempre llevan etiqueta y forma.
    ══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --zaire-bg: #f6f8f9;
-  --zaire-surface: #ffffff;
-  --zaire-surface-2: #eef1f3;
-  --zaire-border: #d7dde2;
-  --zaire-fg: #101619;
-  --zaire-fg-muted: #59656e;
+  color-scheme: dark;
 
-  /* Petróleo: energía + geo, el núcleo de MADRYN. */
-  --zaire-primary: #0e5a6e;
-  --zaire-primary-fg: #ffffff;
-  --zaire-accent: #b86e18;
+  /* ── Paleta cruda ─────────────────────────────────────────────────────── */
+  --mad-charcoal: #0b0f14;
+  --mad-graphite: #121821;
+  --mad-slate: #2a3441;
+  --mad-steel: #566377;
+  --mad-deep-blue: #0b2d6b;
+  --mad-blue: #4f7cd9;
+  --mad-sky: #a7c7f7;
+  --mad-off-white: #eaeff4;
+  --mad-green: #27d17f;
+  --mad-alert: #e5484d;
 
-  --zaire-ok: #1b7548;
-  --zaire-warn: #9a7200;
-  --zaire-danger: #a8322a;
+  /* ── Roles ────────────────────────────────────────────────────────────── */
+  /* Lienzo y superficies. La separación entre capas es tonal y sutil, no por
+     sombra: el instrumento es plano, la jerarquía la da el tono. */
+  --mad-bg: var(--mad-charcoal);
+  --mad-surface: #0f141b;
+  --mad-surface-raised: var(--mad-graphite);
+  --mad-surface-inset: #090d12;
 
-  --zaire-score: #0e5a6e;
-  --zaire-confidence: #5c4fa3;
+  /* Líneas: finas, precisas, de bajo contraste. */
+  --mad-line: #1e2733;
+  --mad-line-strong: var(--mad-slate);
+  --mad-line-active: #2f4a7d;
+
+  /* Texto. */
+  --mad-fg: var(--mad-off-white);
+  --mad-fg-dim: #8e9cb0;
+  --mad-fg-faint: var(--mad-steel);
+
+  /* Interacción. */
+  --mad-accent: var(--mad-blue);
+  --mad-accent-deep: var(--mad-deep-blue);
+  --mad-accent-soft: color-mix(in oklab, var(--mad-blue) 16%, transparent);
+  --mad-highlight: var(--mad-sky);
+
+  /* Estado. Verde SÓLO para verificado, activo, confirmado o delta positivo. */
+  --mad-ok: var(--mad-green);
+  --mad-attention: var(--mad-sky);
+
+  /* Producto. */
+  --mad-score: var(--mad-blue);
+  --mad-confidence: var(--mad-sky);
+
+  /* Geometría: radio bajo, siempre. */
+  --mad-radius: 4px;
+  --mad-radius-lg: 8px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --zaire-bg: #0b0f12;
-    --zaire-surface: #11171b;
-    --zaire-surface-2: #1a2228;
-    --zaire-border: #2a343b;
-    --zaire-fg: #e5eaed;
-    --zaire-fg-muted: #91a0aa;
-
-    --zaire-primary: #3aa8c4;
-    --zaire-primary-fg: #04161c;
-    --zaire-accent: #dd9340;
-
-    --zaire-ok: #3fae74;
-    --zaire-warn: #d3a42b;
-    --zaire-danger: #e1675c;
-
-    --zaire-score: #3aa8c4;
-    --zaire-confidence: #a293e6;
-  }
-}
-
-/* Expone los tokens como utilidades de Tailwind: `bg-zaire-surface`,
-   `text-zaire-fg-muted`, `border-zaire-border`, etc. */
+/* Expone la paleta como utilidades: `bg-mad-surface`, `text-mad-fg-dim`,
+   `border-mad-line`, `text-mad-ok`… */
 @theme inline {
-  --color-zaire-bg: var(--zaire-bg);
-  --color-zaire-surface: var(--zaire-surface);
-  --color-zaire-surface-2: var(--zaire-surface-2);
-  --color-zaire-border: var(--zaire-border);
-  --color-zaire-fg: var(--zaire-fg);
-  --color-zaire-fg-muted: var(--zaire-fg-muted);
-  --color-zaire-primary: var(--zaire-primary);
-  --color-zaire-primary-fg: var(--zaire-primary-fg);
-  --color-zaire-accent: var(--zaire-accent);
-  --color-zaire-ok: var(--zaire-ok);
-  --color-zaire-warn: var(--zaire-warn);
-  --color-zaire-danger: var(--zaire-danger);
-  --color-zaire-score: var(--zaire-score);
-  --color-zaire-confidence: var(--zaire-confidence);
+  --color-mad-bg: var(--mad-bg);
+  --color-mad-surface: var(--mad-surface);
+  --color-mad-surface-raised: var(--mad-surface-raised);
+  --color-mad-surface-inset: var(--mad-surface-inset);
+  --color-mad-line: var(--mad-line);
+  --color-mad-line-strong: var(--mad-line-strong);
+  --color-mad-line-active: var(--mad-line-active);
+  --color-mad-fg: var(--mad-fg);
+  --color-mad-fg-dim: var(--mad-fg-dim);
+  --color-mad-fg-faint: var(--mad-fg-faint);
+  --color-mad-accent: var(--mad-accent);
+  --color-mad-accent-deep: var(--mad-accent-deep);
+  --color-mad-highlight: var(--mad-highlight);
+  --color-mad-ok: var(--mad-ok);
+  --color-mad-attention: var(--mad-attention);
+  --color-mad-alert: var(--mad-alert);
+  --color-mad-score: var(--mad-score);
+  --color-mad-confidence: var(--mad-confidence);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --radius-mad: var(--mad-radius);
+  --radius-mad-lg: var(--mad-radius-lg);
+
+  --font-sans: var(--font-plex-sans);
 }
 
+/* ── Base ─────────────────────────────────────────────────────────────────
+   Cifras tabulares en toda la aplicación: una columna de números que baila al
+   actualizarse es ruido, y acá los números son el contenido. */
 body {
-  background: var(--zaire-bg);
-  color: var(--zaire-fg);
+  background: var(--mad-bg);
+  color: var(--mad-fg);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--mad-blue) 35%, transparent);
+  color: var(--mad-off-white);
+}
+
+:focus-visible {
+  outline: 1px solid var(--mad-accent);
+  outline-offset: 2px;
+}
+
+/* Barras de desplazamiento como parte del instrumento, no del sistema. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mad-slate) transparent;
+}
+
+/* ── Estructuras técnicas ─────────────────────────────────────────────────
+   Clases de composición, no de decoración. Cada una resuelve algo que se
+   repite en toda la interfaz. */
+
+/* Panel de instrumento: superficie, línea fina, radio bajo. Sin sombra. */
+.mad-panel {
+  background: var(--mad-surface);
+  border: 1px solid var(--mad-line);
+  border-radius: var(--mad-radius);
+}
+
+/* Panel seleccionado o prioritario: la línea se enciende, el fondo no cambia. */
+.mad-panel-active {
+  border-color: var(--mad-line-active);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--mad-blue) 12%, transparent);
+}
+
+/* Micro-grilla de fondo. Da textura de carta técnica sin dibujar nada. */
+.mad-grid {
+  background-image:
+    linear-gradient(to right, var(--mad-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--mad-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Esquinas de encuadre: las cuatro marcas de registro alrededor de un elemento
+   seleccionado. Reemplazan al borde completo, que pesa más. */
+.mad-brackets {
+  position: relative;
+}
+.mad-brackets::before,
+.mad-brackets::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--mad-accent);
+  pointer-events: none;
+}
+.mad-brackets::before {
+  top: -3px;
+  left: -3px;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+}
+.mad-brackets::after {
+  right: -3px;
+  bottom: -3px;
+  border-left-color: transparent;
+  border-top-color: transparent;
+}
+
+/* Etiqueta de sección: versalitas espaciadas, tono bajo. */
+.mad-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mad-fg-faint);
+}
+
+/* Punto de estado. El color acompaña, nunca comunica solo: siempre hay texto. */
+.mad-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: currentColor;
+}
+
+/* Halo de objeto activo. Es el único brillo permitido, y sólo para lo que está
+   seleccionado, es reciente o es de alta prioridad. */
+.mad-halo {
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--mad-blue) 18%, transparent),
+    0 0 12px color-mix(in oklab, var(--mad-blue) 24%, transparent);
+}
+
+/* Profundidad atmosférica: degradado oscuro a oscuro. Nada de color decorativo. */
+.mad-depth {
+  background:
+    radial-gradient(120% 90% at 50% 0%, #101823 0%, transparent 60%),
+    linear-gradient(180deg, var(--mad-charcoal) 0%, #070a0e 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
