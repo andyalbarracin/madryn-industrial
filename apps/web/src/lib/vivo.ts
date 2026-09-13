@@ -6,8 +6,17 @@ import 'server-only';
  * Fuentes públicas, sin clave, consultadas desde el servidor y cacheadas: el
  * navegador del usuario no habla con nadie más que con nosotros.
  *
- *  - Clima: servicio meteorológico abierto, uso no comercial libre.
- *  - Sismos: servicio geológico de Estados Unidos, dominio público.
+ *  - Sismos: servicio geológico de Estados Unidos, **dominio público**. Sin
+ *    restricción de uso comercial.
+ *
+ *  - Clima: servicio meteorológico abierto. Los **datos** son CC-BY 4.0, pero el
+ *    plan gratuito de la API está limitado a uso **no comercial**: su condición
+ *    incluye expresamente "integrar el servicio en productos comerciales".
+ *
+ *    🔴 MADRYN ES UN PRODUCTO COMERCIAL. Antes de cobrarle a un cliente hay que
+ *    contratar el plan pago del proveedor o cambiar de proveedor. Está acotado a
+ *    este módulo justamente para que ese cambio sea de una función, no de media
+ *    aplicación.
  *
  * Si una fuente no responde, su tramo desaparece de la marquesina y el resto
  * sigue. Una marquesina que se cae entera porque un servicio externo tosió es
