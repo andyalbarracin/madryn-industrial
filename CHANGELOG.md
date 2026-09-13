@@ -13,6 +13,41 @@ Fecha · Qué cambió · Archivos · Funciones · Notas
 
 ---
 
+## MAD-0017 — el corredor como unidad de análisis, y el primer dato real
+
+**Fecha:** 2026-09-12
+
+**Qué cambió.** Un cambio de encuadre antes que de código: hasta acá el modelo
+miraba **cuencas**. Está bien para saber dónde se produce y mal para saber dónde
+hay trabajo.
+
+La obra no se concentra en el yacimiento: se concentra en el **corredor** que
+saca el producto — ducto, estaciones de bombeo, terminal, monoboyas, puerto. Ahí
+están la soldadura, el montaje, la logística y la inspección, que es exactamente
+lo que vende el cliente. Un pozo nuevo mueve una cuadrilla; un corredor de 600 km
+mueve una industria.
+
+**Primer dato no sembrado.** Todo lo anterior era demostración marcada como tal.
+Esto son hechos publicados por el titular del proyecto, con su fuente registrada.
+
+**Archivos:** `013_corredor_vmos.sql` (fuera del repositorio, como todo el SQL).
+
+**Notas.**
+- Las fechas futuras que declara el titular se guardan como **predicción**, no
+  como hecho de fuente. Que lo diga el dueño del proyecto no lo convierte en
+  ocurrido.
+- La comunicación institucional del titular es hecho de fuente **sobre sus
+  propios planes**, no dato de un organismo de control. Queda escrito en las
+  restricciones de la fuente.
+- Las coordenadas son aproximadas, por la localidad que el consorcio nombra, y
+  van marcadas en los atributos de cada entidad. Un dato aproximado que no dice
+  que lo es, miente.
+- Las empresas del consorcio ya existían en la base: se las vincula al proyecto
+  en vez de duplicarlas. Una entidad se reutiliza, no se vuelve a crear.
+- El ducto entra como un punto en el centro aproximado de su traza, con la
+  limitación anotada: la traza real es una línea y se carga cuando exista el dato
+  oficial.
+
 ## MAD-0016 — cámaras con transmisión en vivo por reproductor oficial
 
 **Fecha:** 2026-09-12
